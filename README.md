@@ -15,6 +15,7 @@ This will also report their similarity on a scale from 1.0 (the same) to a possi
 
 ### Examples
 Notice the bright off-diagonal streaks around the gospels where the parallel passages occur e.g. between Matthew and Mark:
+
 ![Bright Off-diagonal streaks](media/Synoptic_Parallels.png)
 
 And the measuring of the temple in Ezekiel 40 and how it differs from the material around it:
