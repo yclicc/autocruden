@@ -1,5 +1,5 @@
 # AutoCruden
-[[Bible Map Browser](http://www.autocruden.com)] [[Verse Explorer](http://www.autocruden.com/explorer.html)]
+To view the results: [[Bible Map Browser](http://www.autocruden.com)] [[Verse Explorer](http://www.autocruden.com/explorer.html)]
 
 ## TL;DR
 A machine learning model tells you which verses of the Bible are most and least similar to each other.
