@@ -1,0 +1,1 @@
+vips dzsave web_heatmap.png bibledz --suffix .png[palette=true]

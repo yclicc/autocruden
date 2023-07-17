@@ -1,0 +1,101 @@
+<html>
+<head>
+<script src="https://cdn.jsdelivr.net/npm/openseadragon@4.0/build/openseadragon/openseadragon.js"></script>
+<style>
+#tooltip {
+  position: absolute;
+  display: none;
+  padding: 10px;
+  background-color: #000;
+  color: #fff;
+  z-index: 9999;
+}
+
+canvas, #tooltip {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -ms-user-select: none;c
+}
+</style>
+</head>
+<body>
+<div id="seadragon-viewer" style="width:100%; height:100%;">
+</div>
+<table id="tooltip">
+<thead><th></th><th>Verse</th><th>Text</th></thead>
+<tbody>
+<tr><td>y</td><td id="yverse"></td><td id="ytext"></td></tr>
+<tr><td>x</td><td id="xverse"></td><td id="xtext"></td></tr>
+<tr><td>Affinity</td><td id="affinity"></td><td></td></tr>
+</tbody>
+</table>
+<script src="load_data.js"></script>
+<script type="text/javascript">
+loadAll()
+var viewer = OpenSeadragon({
+	id: "seadragon-viewer",
+	prefixUrl: "https://cdn.jsdelivr.net/npm/openseadragon@4.0/build/openseadragon/images/",
+	tileSources: "./bibledz.dzi",
+	minPixelRatio: 1,
+	maxZoomPixelRatio: 20,
+	zoomPerScroll: 2.0,
+	clickToZoom: false,
+	dblClickToZoom: false,
+	zoomPerClick: 0.0,
+	imageSmoothingEnabled: false,
+	
+});
+
+var tooltip = document.getElementById('tooltip');
+var xverse = document.getElementById('xverse');
+var xtext = document.getElementById('xtext');
+var yverse = document.getElementById('yverse');
+var ytext = document.getElementById('ytext');
+var affinity = document.getElementById('affinity');
+var tooltipCreateTime = new Date().getTime();
+var tooltipDebounce = 300;
+
+viewer.addHandler('canvas-double-click', function(event) {
+	tooltipCreateTime = new Date().getTime();
+	var containerBounds = viewer.container.getBoundingClientRect();
+	var clickPosition = {
+		x: event.position.x - containerBounds.left,
+		y: event.position.y - containerBounds.top,
+	}
+	var viewportPoint = viewer.viewport.pointFromPixel(event.position);
+	var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint.x, viewportPoint.y);
+	for (var key in imagePoint) {
+		if (imagePoint.hasOwnProperty(key)) {
+			imagePoint[key] = parseInt(imagePoint[key]);
+		}
+	}
+	
+	tooltip.style.left = clickPosition.x + 'px';
+	tooltip.style.top = clickPosition.y + 'px';
+	tooltip.style.display = 'table';
+
+	if (web) {
+		var xweb = web[imagePoint.x]
+		var yweb = web[imagePoint.y]
+		xverse.textContent = xweb[0];
+		xtext.textContent = xweb[1];
+		yverse.textContent = yweb[0];
+		ytext.textContent = yweb[1];
+		affinity.textContent = dot(webmatrix[imagePoint.x], webmatrix[imagePoint.y]).toFixed(4);
+	}
+	
+	
+
+});
+
+tooltip.addEventListener('click', function() {
+	var currentTime = new Date().getTime();
+	if (currentTime - tooltipCreateTime >= tooltipDebounce) {
+	  tooltip.style.display = 'none';
+	}
+});
+</script>
+</body>
+</html>
