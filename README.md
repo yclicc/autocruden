@@ -24,8 +24,8 @@ And the measuring of the temple in Ezekiel 40 and how it differs from the materi
 And the bit of Numbers 7 where the same thing happens 12 times:
 ![Numbers 7](media/Numbers7.png)
 
-The enormous Psalm 119, which again differs from its surroundings, and the repeated refrain in Psalm 138:
-![Psalm 119-138](media/Psalm119_138.png)
+The enormous Psalm 119, which again differs from its surroundings, and the repeated refrain in Psalm 136:
+![Psalm 119-136](media/Psalm119_138.png)
 
 And the more complex structure in Ezra-Nehemiah:
 ![Ezra-Nehemiah](media/EzraNehemiah.png)
