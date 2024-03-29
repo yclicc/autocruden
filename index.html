@@ -1,101 +1,258 @@
 <html>
 <head>
-<script src="https://cdn.jsdelivr.net/npm/openseadragon@4.0/build/openseadragon/openseadragon.js"></script>
+
 <style>
-#tooltip {
+#suggestions {
   position: absolute;
-  display: none;
-  padding: 10px;
-  background-color: #000;
-  color: #fff;
-  z-index: 9999;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  max-height: 150px;
+  overflow-y: auto;
+  width: 200px;
 }
 
-canvas, #tooltip {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -khtml-user-select: none;
-    -ms-user-select: none;c
+#suggestions p {
+  padding: 5px;
+  margin: 0;
+  cursor: pointer;
 }
+
+#suggestions p:hover {
+  background-color: #e9e9e9;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.results-table th {
+  font-weight: bold;
+}
+
+.results-table td {
+  text-align: center;
+}
+
 </style>
+
 </head>
 <body>
-<div id="seadragon-viewer" style="width:100%; height:100%;">
-</div>
-<table id="tooltip">
-<thead><th></th><th>Verse</th><th>Text</th></thead>
-<tbody>
-<tr><td>y</td><td id="yverse"></td><td id="ytext"></td></tr>
-<tr><td>x</td><td id="xverse"></td><td id="xtext"></td></tr>
-<tr><td>Affinity</td><td id="affinity"></td><td></td></tr>
-</tbody>
-</table>
+
+Enter the Bible verse to find related:<br /><input type="text" id="myInput" oninput="handleInput()" placeholder="Loading please wait...">
+<input type="radio" name="position" value="top" id="top-radio" checked>
+<label for="top-radio">Most Similar</label>
+<input type="radio" name="position" value="bottom" id="bottom-radio">
+<label for="bottom-radio">Least Similar</label>
+<input type="number" min="2" max="500" value="20" id="topn-input">
+
+<div id="suggestions"></div><br /><br />
+<div id="results"></div>
 <script src="load_data.js"></script>
 <script type="text/javascript">
-loadAll()
-var viewer = OpenSeadragon({
-	id: "seadragon-viewer",
-	prefixUrl: "https://cdn.jsdelivr.net/npm/openseadragon@4.0/build/openseadragon/images/",
-	tileSources: "./bibledz.dzi",
-	minPixelRatio: 1,
-	maxZoomPixelRatio: 20,
-	zoomPerScroll: 2.0,
-	clickToZoom: false,
-	dblClickToZoom: false,
-	zoomPerClick: 0.0,
-	imageSmoothingEnabled: false,
+loadAll();
+class TrieNode {
+  constructor() {
+    this.children = {};
+    this.isEndOfWord = false;
+    this.itemIndex = null; // Store the index of the item
+  }
+}
+
+class Trie {
+  constructor() {
+    this.root = new TrieNode();
+  }
+
+  insert(word, index) {
+    let node = this.root;
+    for (let i = 0; i < word.length; i++) {
+      const char = word[i];
+      if (!node.children[char]) {
+        node.children[char] = new TrieNode();
+      }
+      node = node.children[char];
+    }
+    node.isEndOfWord = true;
+    node.itemIndex = index; // Store the index of the item in the TrieNode
+  }
+
+  search(prefix, index=false) {
+    let node = this.root;
+    for (let i = 0; i < prefix.length; i++) {
+      const char = prefix[i];
+      if (!node.children[char]) {
+        return [];
+      }
+      node = node.children[char];
+    }
+    let out = this._collectWords(node, prefix).sort((a, b) => a.index - b.index);
+    if (!index) {
+      return out.map(a => a.word)
+    } else {
+      return out
+    }
+  }
+
+
+  _collectWords(node, prefix) {
+    const words = [];
+    if (node.isEndOfWord) {
+      words.push({
+        word: prefix,
+        index: node.itemIndex // Retrieve the index of the item from the TrieNode
+      });
+    }
+    for (const char in node.children) {
+      const childNode = node.children[char];
+      words.push(...this._collectWords(childNode, prefix + char));
+    }
+    return words;
+  }
+}
+let options = [];
+const trie = new Trie();
+
+async function getOptions()
+{
+  while (web === false || webmatrix === false) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
 	
+  options = web.map(pair => pair[0]);
+  options.forEach((option, index) => trie.insert(option, index));
+  input.placeholder = "E.g. John 3:16";
+}
+
+
+const input = document.getElementById("myInput");
+const suggestions = document.getElementById("suggestions");
+const results = document.getElementById("results");
+
+
+async function handleInput(enter=false) {
+  const inputText = input.value;
+
+  // Load options if not already loaded
+  if (options.length === 0) {
+    await getOptions();
+  }
+
+  let matchingOptions = [];
+  if (inputText.length !== 0)
+  {
+    matchingOptions = trie.search(inputText);
+  }
+
+  suggestions.innerHTML = "";
+  if (matchingOptions.includes(inputText) && enter) {
+    choose()
+  } else if (matchingOptions.length > 1) {
+    matchingOptions.forEach(option => {
+      const p = document.createElement("p");
+      p.textContent = option;
+      p.onclick = () => {
+        input.value = option;
+        suggestions.innerHTML = "";
+      };
+      suggestions.appendChild(p);
+    });
+  } else if (matchingOptions.length == 1) {
+    choose()
+  }
+}
+
+document.addEventListener("click", event => {
+  if (event.target !== input && event.target !== suggestions) {
+    choose()
+  }
 });
 
-var tooltip = document.getElementById('tooltip');
-var xverse = document.getElementById('xverse');
-var xtext = document.getElementById('xtext');
-var yverse = document.getElementById('yverse');
-var ytext = document.getElementById('ytext');
-var affinity = document.getElementById('affinity');
-var tooltipCreateTime = new Date().getTime();
-var tooltipDebounce = 300;
+document.getElementById("top-radio").addEventListener("click", handleInput);
+document.getElementById("bottom-radio").addEventListener("click", handleInput);
+document.getElementById("topn-input").addEventListener("change", handleInput);
 
-viewer.addHandler('canvas-double-click', function(event) {
-	tooltipCreateTime = new Date().getTime();
-	var containerBounds = viewer.container.getBoundingClientRect();
-	var clickPosition = {
-		x: event.position.x - containerBounds.left,
-		y: event.position.y - containerBounds.top,
-	}
-	var viewportPoint = viewer.viewport.pointFromPixel(event.position);
-	var imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint.x, viewportPoint.y);
-	for (var key in imagePoint) {
-		if (imagePoint.hasOwnProperty(key)) {
-			imagePoint[key] = parseInt(imagePoint[key]);
-		}
-	}
-	
-	tooltip.style.left = clickPosition.x + 'px';
-	tooltip.style.top = clickPosition.y + 'px';
-	tooltip.style.display = 'table';
-
-	if (web) {
-		var xweb = web[imagePoint.x]
-		var yweb = web[imagePoint.y]
-		xverse.textContent = xweb[0];
-		xtext.textContent = xweb[1];
-		yverse.textContent = yweb[0];
-		ytext.textContent = yweb[1];
-		affinity.textContent = dot(webmatrix[imagePoint.x], webmatrix[imagePoint.y]).toFixed(4);
-	}
-	
-	
-
+input.addEventListener("keyup", function(event) {
+  if (event.key === "Enter" || event.keyCode === 13) {
+    handleInput(true);
+  }
 });
 
-tooltip.addEventListener('click', function() {
-	var currentTime = new Date().getTime();
-	if (currentTime - tooltipCreateTime >= tooltipDebounce) {
-	  tooltip.style.display = 'none';
-	}
-});
+function rowFromIndex(index, simContent=false) {
+  const row = document.createElement("tr");
+  const webItem = web[index];
+  const verseName = document.createElement("td");
+  verseName.textContent = webItem[0];
+  const verseContent = document.createElement("td");
+  verseContent.textContent = webItem[1];
+  row.appendChild(verseName);
+  row.appendChild(verseContent);
+  if (simContent != false) {
+    const sim = document.createElement("td");
+    sim.textContent = simContent.toFixed(4);
+    row.appendChild(sim);
+  }
+  return row
+}
+
+function findSim(index, topn=document.getElementById("topn-input").value) {
+  const sims = dotOneToMany(webmatrix[index], webmatrix)
+  const topnindexes = argsort(sims, document.querySelector('input[id="bottom-radio"]:checked')).slice(0, topn);
+  let indexWithSim = []
+  topnindexes.forEach(index => indexWithSim.push(
+    {
+     index: index,
+     sim: sims[index]
+    }
+  ));
+  return indexWithSim
+}
+
+function appendResults(index) {
+  clearResults()
+  const table = document.createElement("table");
+  
+  table.classList.add("results-table");
+  
+  const headerRow = document.createElement("tr")
+  const columnNames = ["Location", "Text", "Similarity"]
+  columnNames.forEach(columnName => {
+    const headerCell = document.createElement("th");
+    headerCell.textContent = columnName;
+    headerRow.appendChild(headerCell);
+  }); 
+  table.appendChild(headerRow);
+  const topVerse = rowFromIndex(index, 1.0);
+  table.appendChild(topVerse);
+
+  
+  const otherIndexesAndSims = findSim(index);
+  otherIndexesAndSims.forEach(indexAndSim => {
+    if (indexAndSim.index != index) {
+      const matchVerse = rowFromIndex(indexAndSim.index, indexAndSim.sim)
+      table.appendChild(matchVerse);
+    }
+  });
+  results.append(table);
+}
+
+function clearResults() {
+  results.innerHTML = "";
+}
+
+function choose() {
+  suggestions.innerHtml = "";
+  const item = trie.search(input.value, true).filter(item => item.word === input.value)[0];
+  const verse = item.word;
+  const index = item.index;
+  if (typeof index !== 'undefined') {
+    appendResults(index);
+  }
+}
+
+getOptions();
 </script>
-</body>
+</body> 
 </html>
+
