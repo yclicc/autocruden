@@ -75,7 +75,7 @@ function loadBinary(path = './webembed.binary', dimensions = 768) {
 
 function loadAll(spoofMatrix = false) {
 
-	loadTable("web.csv", "|", false)
+	loadTable("bsb.csv", "|", false)
 	  .then(table => {web = table.slice(1);});
 	  
 	if (spoofMatrix) {
