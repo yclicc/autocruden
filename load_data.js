@@ -53,7 +53,7 @@ const fetchBinaryArray = () => new Promise((resolve) => {
 	xhr.send();
 })
 
-function loadBinary(path = './webembed.binary', dimensions = 768) {
+function loadBinary(path = './bsbembedfast16.npy', dimensions = 384) {
 	return new Promise(resolve => {
 		let xhr = new XMLHttpRequest();
 		xhr.open('get', path, true);
@@ -61,7 +61,7 @@ function loadBinary(path = './webembed.binary', dimensions = 768) {
 		xhr.onload = (event) => {
 			const arrayBuffer = xhr.response;
 			if (arrayBuffer) {
-				const rawArray = new Float32Array(arrayBuffer)
+				const rawArray = new Float16Array(arrayBuffer)
 				var out = []
 				for (let i = 0; i < rawArray.length; i+= dimensions) {
 					out.push(rawArray.slice(i, i + dimensions))
