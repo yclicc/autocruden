@@ -42,7 +42,7 @@ async function loadTable(url, sep, castfloat) {
 
 const fetchBinaryArray = () => new Promise((resolve) => {
 	let xhr = new XMLHttpRequest();
-	xhr.open('get', './bsbembedfast16.bin', true);
+	xhr.open('get', './bsbembedtrunc16.binary', true);
 	xhr.responseType = 'arraybuffer';
 	xhr.onLoad = () => {
 		if (xhr.status === 200) {
@@ -53,7 +53,7 @@ const fetchBinaryArray = () => new Promise((resolve) => {
 	xhr.send();
 })
 
-function loadBinary(path = './bsbembedfast16.bin', dimensions = 384) {
+function loadBinary(path = './bsbembedtrunc16.binary', dimensions = 384) {
 	return new Promise(resolve => {
 		let xhr = new XMLHttpRequest();
 		xhr.open('get', path, true);
