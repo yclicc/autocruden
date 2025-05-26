@@ -156,7 +156,6 @@
                 font-size: 16px;
             }
 
-
             .results-container {
                 position: relative;
                 margin-top: 40px;
@@ -626,7 +625,7 @@
             let searchTimeout;
             let adaptiveDebounce = window.innerWidth <= 768 ? 300 : 10; // 10ms for desktop, 300ms for mobile
             let performanceHistory = [];
-            
+
             // Infinite scrolling variables
             let currentResults = [];
             let displayedCount = 0;
@@ -729,12 +728,16 @@
             // Removed click-to-search since we now search as user types
 
             // Add scroll event listener for infinite scrolling
-            window.addEventListener('scroll', () => {
-                if (currentResults.length === 0 || displayedCount >= currentResults.length) return;
-                
+            window.addEventListener("scroll", () => {
+                if (
+                    currentResults.length === 0 ||
+                    displayedCount >= currentResults.length
+                )
+                    return;
+
                 const scrollPosition = window.innerHeight + window.scrollY;
                 const threshold = document.body.offsetHeight - 1000; // Load more when 1000px from bottom
-                
+
                 if (scrollPosition >= threshold && !isLoading) {
                     removeLoadingIndicator();
                     loadMoreResults();
@@ -800,14 +803,17 @@
 
             function appendResults(index) {
                 clearResults();
-                
+
                 // Prepare all results
                 const otherIndexesAndSims = findSim(index);
-                currentResults = [{index: index, similarity: 1.0}]; // Top verse first
-                
+                currentResults = [{ index: index, similarity: 1.0 }]; // Top verse first
+
                 otherIndexesAndSims.forEach((indexAndSim) => {
                     if (indexAndSim.index != index) {
-                        currentResults.push({index: indexAndSim.index, similarity: indexAndSim.sim});
+                        currentResults.push({
+                            index: indexAndSim.index,
+                            similarity: indexAndSim.sim,
+                        });
                     }
                 });
 
@@ -845,21 +851,25 @@
             }
 
             function loadMoreResults() {
-                if (isLoading || displayedCount >= currentResults.length) return;
-                
+                if (isLoading || displayedCount >= currentResults.length)
+                    return;
+
                 isLoading = true;
-                const table = results.querySelector('.results-table');
-                const endIndex = Math.min(displayedCount + BATCH_SIZE, currentResults.length);
-                
+                const table = results.querySelector(".results-table");
+                const endIndex = Math.min(
+                    displayedCount + BATCH_SIZE,
+                    currentResults.length,
+                );
+
                 for (let i = displayedCount; i < endIndex; i++) {
                     const result = currentResults[i];
                     const row = rowFromIndex(result.index, result.similarity);
                     table.appendChild(row);
                 }
-                
+
                 displayedCount = endIndex;
                 isLoading = false;
-                
+
                 // Add loading indicator if there are more results
                 if (displayedCount < currentResults.length) {
                     addLoadingIndicator();
@@ -867,20 +877,20 @@
             }
 
             function addLoadingIndicator() {
-                const existing = document.getElementById('loading-more');
+                const existing = document.getElementById("loading-more");
                 if (existing) return;
-                
-                const loadingDiv = document.createElement('div');
-                loadingDiv.id = 'loading-more';
-                loadingDiv.style.textAlign = 'center';
-                loadingDiv.style.padding = '20px';
-                loadingDiv.style.color = '#888';
-                loadingDiv.textContent = 'Loading more results...';
+
+                const loadingDiv = document.createElement("div");
+                loadingDiv.id = "loading-more";
+                loadingDiv.style.textAlign = "center";
+                loadingDiv.style.padding = "20px";
+                loadingDiv.style.color = "#888";
+                loadingDiv.textContent = "Loading more results...";
                 results.appendChild(loadingDiv);
             }
 
             function removeLoadingIndicator() {
-                const existing = document.getElementById('loading-more');
+                const existing = document.getElementById("loading-more");
                 if (existing) {
                     existing.remove();
                 }
@@ -927,9 +937,9 @@
 
                     // Prepare all results for infinite scrolling
                     clearResults();
-                    currentResults = allIndices.map(index => ({
+                    currentResults = allIndices.map((index) => ({
                         index: index,
-                        similarity: similarities[index]
+                        similarity: similarities[index],
                     }));
 
                     // Create table structure
