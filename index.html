@@ -612,7 +612,7 @@
 
                 options = bible.map((pair) => pair[0]);
                 options.forEach((option, index) => trie.insert(option, index));
-                input.placeholder = "E.g. John 3:16 or 'love your neighbor'";
+                input.placeholder = "E.g. John 3:16 or 'God so loved'";
 
                 embeddingsProgress.style.width = "100%";
                 embeddingsStatus.textContent = "Biblical embeddings loaded!";
@@ -702,7 +702,7 @@
                 const bibleItem = bible[index];
                 const verseName = document.createElement("td");
                 verseName.className = "verse-location";
-                
+
                 // Check if we're on mobile and have similarity data
                 const isMobile = window.innerWidth <= 768;
                 if (isMobile && simContent !== false) {
@@ -710,7 +710,7 @@
                 } else {
                     verseName.textContent = bibleItem[0];
                 }
-                
+
                 const verseContent = document.createElement("td");
                 verseContent.className = "verse-text";
                 verseContent.textContent = bibleItem[1];
@@ -749,7 +749,7 @@
                 const table = document.createElement("table");
 
                 table.classList.add("results-table");
-                
+
                 // Add mobile layout class if on mobile
                 const isMobile = window.innerWidth <= 768;
                 if (isMobile) {
@@ -757,7 +757,9 @@
                 }
 
                 const headerRow = document.createElement("tr");
-                const columnNames = isMobile ? ["Location", "Text"] : ["Location", "Text", "Similarity"];
+                const columnNames = isMobile
+                    ? ["Location", "Text"]
+                    : ["Location", "Text", "Similarity"];
                 columnNames.forEach((columnName) => {
                     const headerCell = document.createElement("th");
                     headerCell.textContent = columnName;
@@ -833,7 +835,7 @@
                     clearResults();
                     const table = document.createElement("table");
                     table.classList.add("results-table");
-                    
+
                     // Add mobile layout class if on mobile
                     const isMobile = window.innerWidth <= 768;
                     if (isMobile) {
@@ -841,7 +843,9 @@
                     }
 
                     const headerRow = document.createElement("tr");
-                    const columnNames = isMobile ? ["Location", "Text"] : ["Location", "Text", "Similarity"];
+                    const columnNames = isMobile
+                        ? ["Location", "Text"]
+                        : ["Location", "Text", "Similarity"];
                     columnNames.forEach((columnName) => {
                         const headerCell = document.createElement("th");
                         headerCell.textContent = columnName;
