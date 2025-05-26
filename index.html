@@ -262,13 +262,79 @@
                     font-size: 14px;
                 }
             }
+
+            .loading-container {
+                margin: 20px 0;
+                padding: 20px;
+                background: #2c2c2c;
+                border-radius: 12px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            }
+
+            .loading-item {
+                margin-bottom: 20px;
+            }
+
+            .loading-item:last-child {
+                margin-bottom: 0;
+            }
+
+            .loading-label {
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #e0e0e0;
+            }
+
+            .progress-bar {
+                width: 100%;
+                height: 8px;
+                background-color: #444;
+                border-radius: 4px;
+                overflow: hidden;
+                margin-bottom: 5px;
+            }
+
+            .progress-fill {
+                height: 100%;
+                background: linear-gradient(90deg, #4caf50, #45a049);
+                width: 0%;
+                transition: width 0.3s ease;
+            }
+
+            .loading-status {
+                font-size: 0.9em;
+                color: #bbb;
+            }
+
+            .loading-container.hidden {
+                display: none;
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="search-header">
                 <h1>AutoCruden</h1>
-                <p>Enter a verse to find similar verses in the Bible</p>
+                <p>
+                    Enter a verse reference or describe what you're looking for
+                </p>
+            </div>
+
+            <div id="loading-container" class="loading-container">
+                <div class="loading-item">
+                    <div class="loading-label">Loading AI Model...</div>
+                    <div class="progress-bar">
+                        <div id="model-progress" class="progress-fill"></div>
+                    </div>
+                    <div id="model-status" class="loading-status">Initializing...</div>
+                </div>
+                <div class="loading-item">
+                    <div class="loading-label">Loading Biblical Embeddings...</div>
+                    <div class="progress-bar">
+                        <div id="embeddings-progress" class="progress-fill"></div>
+                    </div>
+                    <div id="embeddings-status" class="loading-status">Preparing...</div>
+                </div>
             </div>
 
             <div class="search-container">
@@ -309,8 +375,8 @@
                     <input
                         type="number"
                         min="2"
-                        max="500"
-                        value="20"
+                        max="10000"
+                        value="2000"
                         id="topn-input"
                     />
                 </div>
@@ -321,6 +387,62 @@
             </div>
         </div>
         <script src="load_data.js"></script>
+        <script type="module">
+            import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers";
+
+            let sentenceTransformerModel = null;
+
+            async function initSentenceTransformer() {
+                const modelProgress = document.getElementById("model-progress");
+                const modelStatus = document.getElementById("model-status");
+                
+                try {
+                    modelStatus.textContent = "Downloading model...";
+                    modelProgress.style.width = "20%";
+                    
+                    sentenceTransformerModel = await pipeline(
+                        "feature-extraction",
+                        "Xenova/all-MiniLM-L6-v2",
+                        {
+                            progress_callback: (data) => {
+                                if (data.status === 'download') {
+                                    const percent = Math.round((data.loaded / data.total) * 80);
+                                    modelProgress.style.width = `${20 + percent}%`;
+                                    modelStatus.textContent = `Downloading model... ${percent}%`;
+                                } else if (data.status === 'ready') {
+                                    modelProgress.style.width = "100%";
+                                    modelStatus.textContent = "Model ready!";
+                                }
+                            }
+                        }
+                    );
+                    window.sentenceTransformerModel = sentenceTransformerModel;
+                    modelProgress.style.width = "100%";
+                    modelStatus.textContent = "AI Model loaded successfully!";
+                    
+                    // Check if both components are ready to hide loading
+                    setTimeout(() => {
+                        const loadingContainer = document.getElementById("loading-container");
+                        if (window.sentenceTransformerModel && bible && biblematrix) {
+                            loadingContainer.classList.add("hidden");
+                        }
+                    }, 1000);
+                } catch (error) {
+                    modelStatus.textContent = "Failed to load AI model";
+                    modelProgress.style.backgroundColor = "#f44336";
+                    console.error(
+                        "Failed to load sentence transformer model:",
+                        error,
+                    );
+                }
+            }
+
+            // Initialize the model immediately
+            initSentenceTransformer();
+
+            // Also expose it globally for manual initialization if needed
+            window.initSentenceTransformer = initSentenceTransformer;
+        </script>
         <script type="text/javascript">
             loadAll();
             class TrieNode {
@@ -389,18 +511,44 @@
             const trie = new Trie();
 
             async function getOptions() {
+                const embeddingsProgress = document.getElementById("embeddings-progress");
+                const embeddingsStatus = document.getElementById("embeddings-status");
+                
+                embeddingsStatus.textContent = "Loading biblical data...";
+                embeddingsProgress.style.width = "10%";
+
                 while (bible === false || biblematrix === false) {
                     await new Promise((resolve) => setTimeout(resolve, 100));
+                    if (bible !== false && biblematrix === false) {
+                        embeddingsProgress.style.width = "50%";
+                        embeddingsStatus.textContent = "Loading embeddings...";
+                    } else if (bible !== false && biblematrix !== false) {
+                        embeddingsProgress.style.width = "90%";
+                        embeddingsStatus.textContent = "Processing data...";
+                    }
                 }
 
                 options = bible.map((pair) => pair[0]);
                 options.forEach((option, index) => trie.insert(option, index));
-                input.placeholder = "E.g. John 3:16";
+                input.placeholder = "E.g. John 3:16 or 'love your neighbor'";
+                
+                embeddingsProgress.style.width = "100%";
+                embeddingsStatus.textContent = "Biblical embeddings loaded!";
+                
+                // Hide loading container after both are complete
+                setTimeout(() => {
+                    const loadingContainer = document.getElementById("loading-container");
+                    if (window.sentenceTransformerModel && bible && biblematrix) {
+                        loadingContainer.classList.add("hidden");
+                    }
+                }, 1000);
             }
 
             const input = document.getElementById("myInput");
             const suggestions = document.getElementById("suggestions");
             const results = document.getElementById("results");
+
+            let searchTimeout;
 
             async function handleInput(enter = false) {
                 const inputText = input.value;
@@ -425,19 +573,26 @@
                         p.onclick = () => {
                             input.value = option;
                             suggestions.innerHTML = "";
+                            choose(); // Search immediately when suggestion is clicked
                         };
                         suggestions.appendChild(p);
                     });
                 } else if (matchingOptions.length == 1) {
                     choose();
                 }
+
+                // Debounced search as user types
+                clearTimeout(searchTimeout);
+                if (inputText.trim().length > 0) {
+                    searchTimeout = setTimeout(() => {
+                        choose();
+                    }, 10); // Wait 500ms after user stops typing
+                } else {
+                    clearResults(); // Clear results when input is empty
+                }
             }
 
-            document.addEventListener("click", (event) => {
-                if (event.target !== input && event.target !== suggestions) {
-                    choose();
-                }
-            });
+            // Removed click-to-search since we now search as user types
 
             document
                 .getElementById("top-radio")
@@ -528,15 +683,96 @@
                 results.innerHTML = "";
             }
 
+            function isVerseReference(text) {
+                // Check if the text matches common Bible verse patterns
+                const versePatterns = [
+                    /^\d?\s*[A-Za-z]+\s+\d+:\d+/, // "John 3:16", "1 John 3:16"
+                    /^[A-Za-z]+\s+\d+$/, // "Genesis 1"
+                    /^\d?\s*[A-Za-z]+$/, // "John", "1 John"
+                ];
+
+                return versePatterns.some((pattern) =>
+                    pattern.test(text.trim()),
+                );
+            }
+
+            async function performSemanticSearch(queryText) {
+                if (!window.sentenceTransformerModel) {
+                    console.log("Sentence transformer model not loaded yet");
+                    return;
+                }
+
+                try {
+                    // Encode the query text
+                    const embedding = await window.sentenceTransformerModel(
+                        [queryText],
+                        {
+                            pooling: "mean",
+                            normalize: true,
+                        },
+                    );
+                    const queryVector = Array.from(embedding.data);
+
+                    // Calculate similarities with all verses
+                    const similarities = dotOneToMany(queryVector, biblematrix);
+
+                    // Get top results
+                    const topn = parseInt(
+                        document.getElementById("topn-input").value,
+                    );
+                    const isBottom = document.querySelector(
+                        'input[id="bottom-radio"]:checked',
+                    );
+                    const topIndices = argsort(similarities, isBottom).slice(
+                        0,
+                        topn,
+                    );
+
+                    // Display results
+                    clearResults();
+                    const table = document.createElement("table");
+                    table.classList.add("results-table");
+
+                    const headerRow = document.createElement("tr");
+                    const columnNames = ["Location", "Text", "Similarity"];
+                    columnNames.forEach((columnName) => {
+                        const headerCell = document.createElement("th");
+                        headerCell.textContent = columnName;
+                        headerRow.appendChild(headerCell);
+                    });
+                    table.appendChild(headerRow);
+
+                    topIndices.forEach((index) => {
+                        const row = rowFromIndex(index, similarities[index]);
+                        table.appendChild(row);
+                    });
+
+                    results.appendChild(table);
+                } catch (error) {
+                    console.error("Error performing semantic search:", error);
+                }
+            }
+
             function choose() {
-                suggestions.innerHtml = "";
-                const item = trie
-                    .search(input.value, true)
-                    .filter((item) => item.word === input.value)[0];
-                const verse = item.word;
-                const index = item.index;
-                if (typeof index !== "undefined") {
-                    appendResults(index);
+                suggestions.innerHTML = "";
+                const inputText = input.value.trim();
+
+                if (isVerseReference(inputText)) {
+                    // Traditional verse reference search
+                    const item = trie
+                        .search(inputText, true)
+                        .filter((item) => item.word === inputText)[0];
+                    const verse = item?.word;
+                    const index = item?.index;
+                    if (typeof index !== "undefined") {
+                        appendResults(index);
+                    } else {
+                        // No exact verse found, fall back to semantic search
+                        performSemanticSearch(inputText);
+                    }
+                } else if (inputText.length > 0) {
+                    // Semantic search for non-verse text
+                    performSemanticSearch(inputText);
                 }
             }
 
