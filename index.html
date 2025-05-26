@@ -406,12 +406,20 @@
                         {
                             progress_callback: (data) => {
                                 if (data.status === 'download') {
-                                    const percent = Math.round((data.loaded / data.total) * 80);
-                                    modelProgress.style.width = `${20 + percent}%`;
-                                    modelStatus.textContent = `Downloading model... ${percent}%`;
+                                    if (data.loaded && data.total) {
+                                        const percent = Math.round((data.loaded / data.total) * 80);
+                                        modelProgress.style.width = `${20 + percent}%`;
+                                        modelStatus.textContent = `Downloading model... ${percent}%`;
+                                    } else {
+                                        modelProgress.style.width = "50%";
+                                        modelStatus.textContent = "Downloading model...";
+                                    }
                                 } else if (data.status === 'ready') {
                                     modelProgress.style.width = "100%";
                                     modelStatus.textContent = "Model ready!";
+                                } else if (data.status === 'progress') {
+                                    modelProgress.style.width = "70%";
+                                    modelStatus.textContent = "Processing model...";
                                 }
                             }
                         }
