@@ -86,7 +86,6 @@
                 color: #9aa0a6;
             }
 
-
             .controls {
                 display: flex;
                 justify-content: center;
@@ -337,7 +336,7 @@
                     <img src="AlexanderCruden.jpg" alt="Alexander Cruden" />
                     <div class="image-caption">
                         Alexander Cruden (1699-1770)<br />Creator of the first
-                        Bible concordance
+                        systematic Bible concordance
                     </div>
                 </div>
                 <div class="loading-item">
@@ -425,29 +424,55 @@
                                 if (data.status === "download") {
                                     if (data.loaded && data.total) {
                                         const percent = Math.round(
-                                            (data.loaded / data.total) * 80,
+                                            (data.loaded / data.total) * 100,
                                         );
-                                        modelProgress.style.width = `${20 + percent}%`;
-                                        modelStatus.textContent = `Downloading model... ${percent}%`;
+                                        modelProgress.style.width = `${percent}%`;
+                                        const loadedMB = (
+                                            data.loaded /
+                                            1024 /
+                                            1024
+                                        ).toFixed(1);
+                                        const totalMB = (
+                                            data.total /
+                                            1024 /
+                                            1024
+                                        ).toFixed(1);
+                                        modelStatus.textContent = `Downloading model... ${percent}% (${loadedMB}/${totalMB} MB)`;
                                     } else {
-                                        modelProgress.style.width = "50%";
+                                        modelProgress.style.width = "10%";
                                         modelStatus.textContent =
-                                            "Downloading model...";
+                                            "Starting download...";
                                     }
                                 } else if (data.status === "ready") {
                                     modelProgress.style.width = "100%";
                                     modelStatus.textContent = "Model ready!";
                                 } else if (data.status === "progress") {
-                                    modelProgress.style.width = "70%";
+                                    if (data.progress !== undefined) {
+                                        const percent = Math.round(
+                                            data.progress,
+                                        );
+                                        modelProgress.style.width = `${percent}%`;
+                                        modelStatus.textContent = `Processing model... ${percent}%`;
+                                    } else {
+                                        modelProgress.style.width = "90%";
+                                        modelStatus.textContent =
+                                            "Processing model...";
+                                    }
+                                } else if (data.status === "initiate") {
+                                    modelProgress.style.width = "5%";
                                     modelStatus.textContent =
-                                        "Processing model...";
+                                        "Initializing download...";
                                 }
                             },
                         },
                     );
                     window.sentenceTransformerModel = sentenceTransformerModel;
-                    modelProgress.style.width = "100%";
-                    modelStatus.textContent = "AI Model loaded successfully!";
+                    // Don't override the progress callback's final state
+                    if (modelProgress.style.width !== "100%") {
+                        modelProgress.style.width = "100%";
+                        modelStatus.textContent =
+                            "AI Model loaded successfully!";
+                    }
 
                     // Check if both components are ready to hide loading
                     setTimeout(() => {
@@ -478,7 +503,37 @@
             window.initSentenceTransformer = initSentenceTransformer;
         </script>
         <script type="text/javascript">
-            loadAll();
+            // Create progress callback for embeddings loading
+            const embeddingsProgressCallback = (data) => {
+                const embeddingsProgress = document.getElementById(
+                    "embeddings-progress",
+                );
+                const embeddingsStatus =
+                    document.getElementById("embeddings-status");
+
+                if (data.status === "downloading") {
+                    if (data.percent !== null) {
+                        embeddingsProgress.style.width = `${data.percent}%`;
+                        if (data.totalMB) {
+                            embeddingsStatus.textContent = `Downloading embeddings... ${data.percent}% (${data.loadedMB}/${data.totalMB} MB)`;
+                        } else {
+                            embeddingsStatus.textContent = `Downloading embeddings... ${data.loadedMB} MB`;
+                        }
+                    } else {
+                        embeddingsProgress.style.width = "5%";
+                        embeddingsStatus.textContent = `Downloading embeddings... ${data.loadedMB} MB`;
+                    }
+                } else if (data.status === "complete") {
+                    embeddingsProgress.style.width = "100%";
+                    embeddingsStatus.textContent =
+                        "Biblical embeddings loaded!";
+                } else if (data.status === "error") {
+                    embeddingsProgress.style.backgroundColor = "#f44336";
+                    embeddingsStatus.textContent = "Failed to load embeddings";
+                }
+            };
+
+            loadAll(false, embeddingsProgressCallback);
             class TrieNode {
                 constructor() {
                     this.children = {};
@@ -545,32 +600,19 @@
             const trie = new Trie();
 
             async function getOptions() {
-                const embeddingsProgress = document.getElementById(
-                    "embeddings-progress",
-                );
-                const embeddingsStatus =
-                    document.getElementById("embeddings-status");
-
-                embeddingsStatus.textContent = "Loading biblical data...";
-                embeddingsProgress.style.width = "10%";
-
-                while (bible === false || biblematrix === false) {
+                // Wait for bible data to load
+                while (bible === false) {
                     await new Promise((resolve) => setTimeout(resolve, 100));
-                    if (bible !== false && biblematrix === false) {
-                        embeddingsProgress.style.width = "50%";
-                        embeddingsStatus.textContent = "Loading embeddings...";
-                    } else if (bible !== false && biblematrix !== false) {
-                        embeddingsProgress.style.width = "90%";
-                        embeddingsStatus.textContent = "Processing data...";
-                    }
+                }
+
+                // Wait for biblematrix to load (it should be loading with progress now)
+                while (biblematrix === false) {
+                    await new Promise((resolve) => setTimeout(resolve, 100));
                 }
 
                 options = bible.map((pair) => pair[0]);
                 options.forEach((option, index) => trie.insert(option, index));
                 input.placeholder = "E.g. John 3:16 or 'God so loved'";
-
-                embeddingsProgress.style.width = "100%";
-                embeddingsStatus.textContent = "Biblical embeddings loaded!";
 
                 // Hide loading container after both are complete
                 setTimeout(() => {
@@ -701,10 +743,16 @@
 
             document
                 .getElementById("top-radio")
-                .addEventListener("click", handleInput);
+                .addEventListener("click", function() {
+                    updateUrlParams();
+                    handleInput();
+                });
             document
                 .getElementById("bottom-radio")
-                .addEventListener("click", handleInput);
+                .addEventListener("click", function() {
+                    updateUrlParams();
+                    handleInput();
+                });
 
             input.addEventListener("keyup", function (event) {
                 if (event.key === "Enter" || event.keyCode === 13) {
@@ -926,15 +974,29 @@
                 }
             }
 
-            function choose() {
+            function updateUrlParams() {
                 const inputText = input.value.trim();
+                const isBottomSelected = document.getElementById("bottom-radio").checked;
                 
-                // Update URL with query parameter
                 if (inputText) {
                     const url = new URL(window.location);
-                    url.searchParams.set('q', inputText);
-                    window.history.replaceState({}, '', url);
+                    url.searchParams.set("q", inputText);
+                    
+                    if (isBottomSelected) {
+                        url.searchParams.set("r", "");
+                    } else {
+                        url.searchParams.delete("r");
+                    }
+                    
+                    window.history.replaceState({}, "", url);
                 }
+            }
+
+            function choose() {
+                const inputText = input.value.trim();
+
+                // Update URL with query parameter
+                updateUrlParams();
 
                 if (isVerseReference(inputText)) {
                     // Traditional verse reference search
@@ -958,16 +1020,30 @@
             // Load query from URL parameter on page load
             function loadQueryFromURL() {
                 const urlParams = new URLSearchParams(window.location.search);
-                const query = urlParams.get('q');
+                const query = urlParams.get("q");
+                const reverse = urlParams.has("r");
+                
                 if (query) {
                     input.value = query;
                     // Trigger search after data is loaded
                     const checkDataLoaded = setInterval(() => {
-                        if (options.length > 0 && window.sentenceTransformerModel) {
+                        if (
+                            options.length > 0 &&
+                            window.sentenceTransformerModel
+                        ) {
                             clearInterval(checkDataLoaded);
                             choose();
                         }
                     }, 100);
+                }
+                
+                // Set radio button based on reverse parameter
+                if (reverse) {
+                    document.getElementById("bottom-radio").checked = true;
+                    document.getElementById("top-radio").checked = false;
+                } else {
+                    document.getElementById("top-radio").checked = true;
+                    document.getElementById("bottom-radio").checked = false;
                 }
             }
 

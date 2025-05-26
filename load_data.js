@@ -44,14 +44,50 @@ async function loadTable(url, sep, castfloat) {
   }
 }
 
-function loadBinary(path = "./bsbembedfast16.binary", dimensions = 384) {
+function loadBinary(path = "./bsbembedfast16.binary", dimensions = 384, progressCallback = null) {
   return new Promise((resolve) => {
     let xhr = new XMLHttpRequest();
     xhr.open("get", path, true);
     xhr.responseType = "arraybuffer";
+    
+    // Add progress tracking
+    if (progressCallback) {
+      xhr.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          const loadedMB = (event.loaded / 1024 / 1024).toFixed(1);
+          const totalMB = (event.total / 1024 / 1024).toFixed(1);
+          progressCallback({
+            status: 'downloading',
+            loaded: event.loaded,
+            total: event.total,
+            percent: percent,
+            loadedMB: loadedMB,
+            totalMB: totalMB
+          });
+        } else {
+          progressCallback({
+            status: 'downloading',
+            loaded: event.loaded,
+            total: null,
+            percent: null,
+            loadedMB: (event.loaded / 1024 / 1024).toFixed(1),
+            totalMB: null
+          });
+        }
+      };
+    }
+    
     xhr.onload = () => {
       const arrayBuffer = xhr.response;
       if (arrayBuffer) {
+        if (progressCallback) {
+          progressCallback({
+            status: 'processing',
+            percent: 100
+          });
+        }
+        
         let rawArray;
         let out = [];
 
@@ -112,14 +148,31 @@ function loadBinary(path = "./bsbembedfast16.binary", dimensions = 384) {
           }
         }
 
+        if (progressCallback) {
+          progressCallback({
+            status: 'complete',
+            percent: 100
+          });
+        }
+        
         resolve(out);
       }
     };
+    
+    xhr.onerror = () => {
+      if (progressCallback) {
+        progressCallback({
+          status: 'error',
+          percent: 0
+        });
+      }
+    };
+    
     xhr.send();
   });
 }
 
-function loadAll(spoofMatrix = false) {
+function loadAll(spoofMatrix = false, progressCallback = null) {
   loadTable("bsb.csv", "|", false).then((table) => {
     bible = table.slice(1);
   });
@@ -147,7 +200,7 @@ function loadAll(spoofMatrix = false) {
     // 	}
     // }
     // xhr.send();
-    loadBinary().then((matrix) => {
+    loadBinary("./bsbembedfast16.binary", 384, progressCallback).then((matrix) => {
       biblematrix = matrix;
     });
     // loadBinary("./webembedpca50.binary", 50).then(matrix => {webmatrixpca = matrix})
