@@ -156,15 +156,6 @@
                 font-size: 16px;
             }
 
-            #topn-input {
-                padding: 8px 12px;
-                border: 1px solid #3c4043;
-                border-radius: 8px;
-                background: #2d2d2d;
-                color: #e0e0e0;
-                font-size: 16px;
-                width: 80px;
-            }
 
             .results-container {
                 position: relative;
@@ -254,6 +245,13 @@
                 .controls {
                     flex-direction: column;
                     gap: 20px;
+                    top: 100px; /* Adjusted for mobile */
+                }
+
+                .results-table th {
+                    top: 180px; /* Adjusted for mobile */
+                    padding: 12px 16px;
+                    font-size: 14px;
                 }
 
                 .results-table th,
@@ -431,16 +429,6 @@
                         id="bottom-radio"
                     />
                     <label for="bottom-radio">Least Similar</label>
-                </div>
-                <div class="number-input">
-                    <label for="topn-input">Results:</label>
-                    <input
-                        type="number"
-                        min="2"
-                        max="10000"
-                        value="2000"
-                        id="topn-input"
-                    />
                 </div>
             </div>
 
@@ -636,6 +624,63 @@
             const results = document.getElementById("results");
 
             let searchTimeout;
+            let adaptiveDebounce = window.innerWidth <= 768 ? 300 : 10; // 10ms for desktop, 300ms for mobile
+            let performanceHistory = [];
+            
+            // Infinite scrolling variables
+            let currentResults = [];
+            let displayedCount = 0;
+            let isLoading = false;
+            const BATCH_SIZE = 50; // Load 50 results at a time
+
+            // Function to measure and adapt debounce timing
+            function measurePerformance() {
+                const start = performance.now();
+                return () => {
+                    const duration = performance.now() - start;
+                    performanceHistory.push(duration);
+
+                    // Keep only last 5 measurements
+                    if (performanceHistory.length > 5) {
+                        performanceHistory.shift();
+                    }
+
+                    // Calculate average performance
+                    const avgDuration =
+                        performanceHistory.reduce((a, b) => a + b, 0) /
+                        performanceHistory.length;
+
+                    // Adapt debounce based on performance and device type
+                    const isMobile = window.innerWidth <= 768;
+                    const minDebounce = isMobile ? 100 : 5;
+                    const maxDebounce = isMobile ? 1000 : 500;
+
+                    if (avgDuration < 100) {
+                        // Fast device - shorter debounce
+                        adaptiveDebounce = Math.max(
+                            minDebounce,
+                            adaptiveDebounce * 0.9,
+                        );
+                    } else if (avgDuration > 500) {
+                        // Slow device - longer debounce
+                        adaptiveDebounce = Math.min(
+                            maxDebounce,
+                            adaptiveDebounce * 1.2,
+                        );
+                    } else {
+                        // Medium performance - adjust gradually
+                        const targetDebounce = Math.max(
+                            minDebounce,
+                            Math.min(maxDebounce, avgDuration * 0.8),
+                        );
+                        adaptiveDebounce =
+                            (adaptiveDebounce + targetDebounce) / 2;
+                    }
+
+                    // Round to nearest 5ms for smoother experience
+                    adaptiveDebounce = Math.round(adaptiveDebounce / 5) * 5;
+                };
+            }
 
             async function handleInput(enter = false) {
                 const inputText = input.value;
@@ -672,8 +717,10 @@
                 clearTimeout(searchTimeout);
                 if (inputText.trim().length > 0) {
                     searchTimeout = setTimeout(() => {
+                        const performanceEnd = measurePerformance();
                         choose();
-                    }, 10); // Wait 500ms after user stops typing
+                        performanceEnd(); // Measure how long choose() took
+                    }, adaptiveDebounce);
                 } else {
                     clearResults(); // Clear results when input is empty
                 }
@@ -681,15 +728,25 @@
 
             // Removed click-to-search since we now search as user types
 
+            // Add scroll event listener for infinite scrolling
+            window.addEventListener('scroll', () => {
+                if (currentResults.length === 0 || displayedCount >= currentResults.length) return;
+                
+                const scrollPosition = window.innerHeight + window.scrollY;
+                const threshold = document.body.offsetHeight - 1000; // Load more when 1000px from bottom
+                
+                if (scrollPosition >= threshold && !isLoading) {
+                    removeLoadingIndicator();
+                    loadMoreResults();
+                }
+            });
+
             document
                 .getElementById("top-radio")
                 .addEventListener("click", handleInput);
             document
                 .getElementById("bottom-radio")
                 .addEventListener("click", handleInput);
-            document
-                .getElementById("topn-input")
-                .addEventListener("change", handleInput);
 
             input.addEventListener("keyup", function (event) {
                 if (event.key === "Enter" || event.keyCode === 13) {
@@ -725,17 +782,14 @@
                 return row;
             }
 
-            function findSim(
-                index,
-                topn = document.getElementById("topn-input").value,
-            ) {
+            function findSim(index) {
                 const sims = dotOneToMany(biblematrix[index], biblematrix);
-                const topnindexes = argsort(
+                const allindexes = argsort(
                     sims,
                     document.querySelector('input[id="bottom-radio"]:checked'),
-                ).slice(0, topn);
+                );
                 let indexWithSim = [];
-                topnindexes.forEach((index) =>
+                allindexes.forEach((index) =>
                     indexWithSim.push({
                         index: index,
                         sim: sims[index],
@@ -746,8 +800,19 @@
 
             function appendResults(index) {
                 clearResults();
-                const table = document.createElement("table");
+                
+                // Prepare all results
+                const otherIndexesAndSims = findSim(index);
+                currentResults = [{index: index, similarity: 1.0}]; // Top verse first
+                
+                otherIndexesAndSims.forEach((indexAndSim) => {
+                    if (indexAndSim.index != index) {
+                        currentResults.push({index: indexAndSim.index, similarity: indexAndSim.sim});
+                    }
+                });
 
+                // Create table structure
+                const table = document.createElement("table");
                 table.classList.add("results-table");
 
                 // Add mobile layout class if on mobile
@@ -766,24 +831,59 @@
                     headerRow.appendChild(headerCell);
                 });
                 table.appendChild(headerRow);
-                const topVerse = rowFromIndex(index, 1.0);
-                table.appendChild(topVerse);
-
-                const otherIndexesAndSims = findSim(index);
-                otherIndexesAndSims.forEach((indexAndSim) => {
-                    if (indexAndSim.index != index) {
-                        const matchVerse = rowFromIndex(
-                            indexAndSim.index,
-                            indexAndSim.sim,
-                        );
-                        table.appendChild(matchVerse);
-                    }
-                });
                 results.append(table);
+
+                // Load first batch of results
+                loadMoreResults();
             }
 
             function clearResults() {
                 results.innerHTML = "";
+                currentResults = [];
+                displayedCount = 0;
+                isLoading = false;
+            }
+
+            function loadMoreResults() {
+                if (isLoading || displayedCount >= currentResults.length) return;
+                
+                isLoading = true;
+                const table = results.querySelector('.results-table');
+                const endIndex = Math.min(displayedCount + BATCH_SIZE, currentResults.length);
+                
+                for (let i = displayedCount; i < endIndex; i++) {
+                    const result = currentResults[i];
+                    const row = rowFromIndex(result.index, result.similarity);
+                    table.appendChild(row);
+                }
+                
+                displayedCount = endIndex;
+                isLoading = false;
+                
+                // Add loading indicator if there are more results
+                if (displayedCount < currentResults.length) {
+                    addLoadingIndicator();
+                }
+            }
+
+            function addLoadingIndicator() {
+                const existing = document.getElementById('loading-more');
+                if (existing) return;
+                
+                const loadingDiv = document.createElement('div');
+                loadingDiv.id = 'loading-more';
+                loadingDiv.style.textAlign = 'center';
+                loadingDiv.style.padding = '20px';
+                loadingDiv.style.color = '#888';
+                loadingDiv.textContent = 'Loading more results...';
+                results.appendChild(loadingDiv);
+            }
+
+            function removeLoadingIndicator() {
+                const existing = document.getElementById('loading-more');
+                if (existing) {
+                    existing.remove();
+                }
             }
 
             function isVerseReference(text) {
@@ -819,20 +919,20 @@
                     // Calculate similarities with all verses
                     const similarities = dotOneToMany(queryVector, biblematrix);
 
-                    // Get top results
-                    const topn = parseInt(
-                        document.getElementById("topn-input").value,
-                    );
+                    // Get all results sorted by similarity
                     const isBottom = document.querySelector(
                         'input[id="bottom-radio"]:checked',
                     );
-                    const topIndices = argsort(similarities, isBottom).slice(
-                        0,
-                        topn,
-                    );
+                    const allIndices = argsort(similarities, isBottom);
 
-                    // Display results
+                    // Prepare all results for infinite scrolling
                     clearResults();
+                    currentResults = allIndices.map(index => ({
+                        index: index,
+                        similarity: similarities[index]
+                    }));
+
+                    // Create table structure
                     const table = document.createElement("table");
                     table.classList.add("results-table");
 
@@ -852,13 +952,10 @@
                         headerRow.appendChild(headerCell);
                     });
                     table.appendChild(headerRow);
-
-                    topIndices.forEach((index) => {
-                        const row = rowFromIndex(index, similarities[index]);
-                        table.appendChild(row);
-                    });
-
                     results.appendChild(table);
+
+                    // Load first batch of results
+                    loadMoreResults();
                 } catch (error) {
                     console.error("Error performing semantic search:", error);
                 }
