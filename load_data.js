@@ -1,123 +1,171 @@
-var web = false, webmatrix = false, webmatrixpca = false;
+var bible = false,
+  biblematrix = false,
+  biblematrixpca = false;
 
 function innerProduct(vector1, vector2) {
-    let result = 0;
-    for (let i = 0; i < vector1.length; i++) {
-        result += vector1[i] * vector2[i];
-    }
-    result = Math.floor((result + 1) * (255.0 / 2))
-    return result;
+  let result = 0;
+  for (let i = 0; i < vector1.length; i++) {
+    result += vector1[i] * vector2[i];
+  }
+  result = Math.floor((result + 1) * (255.0 / 2));
+  return result;
 }
 
 // Function to compute the pairwise inner products and organize them into a grid
 function computeInnerProductGrid(vectors) {
-    let grid = [];
-    for (let i = 0; i < vectors.length; i++) {
-        grid[i] = new Uint8Array(vectors.length);
-        for (let j = 0; j < vectors.length; j++) {
-            if (j < i) {
-                grid[i][j] = grid[j][i]; // Use previously computed product
-            } else {
-                grid[i][j] = innerProduct(vectors[i], vectors[j]);
-            }
-        }
+  let grid = [];
+  for (let i = 0; i < vectors.length; i++) {
+    grid[i] = new Uint8Array(vectors.length);
+    for (let j = 0; j < vectors.length; j++) {
+      if (j < i) {
+        grid[i][j] = grid[j][i]; // Use previously computed product
+      } else {
+        grid[i][j] = innerProduct(vectors[i], vectors[j]);
+      }
     }
-    return grid;
+  }
+  return grid;
 }
 
 async function loadTable(url, sep, castfloat) {
-	try {
-		const response = await fetch(url);
-		const csvData = await response.text();
-		
-		// Parse the CSV data
-		const rows = csvData.split(/\r?\n/);
-		const table = rows.map(row => row.split(sep).map(castfloat ? parseFloat : val => val));
-		
-		return table
-	} catch (error) {
-		throw new Error("Failed to load the table: " + error.message);
-	}
+  try {
+    const response = await fetch(url);
+    const csvData = await response.text();
+
+    // Parse the CSV data
+    const rows = csvData.split(/\r?\n/);
+    const table = rows.map((row) =>
+      row.split(sep).map(castfloat ? parseFloat : (val) => val),
+    );
+
+    return table;
+  } catch (error) {
+    throw new Error("Failed to load the table: " + error.message);
+  }
 }
 
-const fetchBinaryArray = () => new Promise((resolve) => {
-	let xhr = new XMLHttpRequest();
-	xhr.open('get', './bsbembedtrunc16.binary', true);
-	xhr.responseType = 'arraybuffer';
-	xhr.onLoad = () => {
-		if (xhr.status === 200) {
-			resolve(xhr.response);
-		}
-	}
-	xhr.onError = () => { reject(); }
-	xhr.send();
-})
+function loadBinary(path = "./bsbembedfast16.binary", dimensions = 384) {
+  return new Promise((resolve) => {
+    let xhr = new XMLHttpRequest();
+    xhr.open("get", path, true);
+    xhr.responseType = "arraybuffer";
+    xhr.onload = () => {
+      const arrayBuffer = xhr.response;
+      if (arrayBuffer) {
+        let rawArray;
+        let out = [];
 
-function loadBinary(path = './bsbembedtrunc16.binary', dimensions = 384) {
-	return new Promise(resolve => {
-		let xhr = new XMLHttpRequest();
-		xhr.open('get', path, true);
-		xhr.responseType = 'arraybuffer';
-		xhr.onload = (event) => {
-			const arrayBuffer = xhr.response;
-			if (arrayBuffer) {
-				const rawArray = new Float16Array(arrayBuffer)
-				var out = []
-				for (let i = 0; i < rawArray.length; i+= dimensions) {
-					out.push(rawArray.slice(i, i + dimensions))
-				}
-				resolve(out)
-			}
-		}
-		xhr.send();
-	});
+        // Check if Float16Array is available
+        if (typeof Float16Array !== "undefined") {
+          // Use native Float16Array if available
+          rawArray = new Float16Array(arrayBuffer);
+          for (let i = 0; i < rawArray.length; i += dimensions) {
+            out.push(Array.from(rawArray.slice(i, i + dimensions)));
+          }
+        } else {
+          // Handle Float16 data manually if Float16Array is not available
+          const dataView = new DataView(arrayBuffer);
+          const length = arrayBuffer.byteLength / 2; // 2 bytes per Float16
+          rawArray = new Float32Array(length);
+
+          // Convert Float16 to Float32
+          for (let i = 0; i < length; i++) {
+            // Read the Float16 value at position i*2
+            const uint16 = dataView.getUint16(i * 2, true); // true for little-endian
+
+            // Convert Float16 to Float32
+            const sign = (uint16 >> 15) & 0x1;
+            let exponent = (uint16 >> 10) & 0x1f;
+            let fraction = uint16 & 0x3ff;
+
+            let float32;
+            if (exponent === 0) {
+              if (fraction === 0) {
+                float32 = sign ? -0 : 0;
+              } else {
+                // Denormalized number
+                exponent = 1;
+                while ((fraction & 0x400) === 0) {
+                  fraction <<= 1;
+                  exponent--;
+                }
+                fraction &= 0x3ff;
+                float32 =
+                  (sign ? -1 : 1) *
+                  Math.pow(2, exponent - 25) *
+                  (1 + fraction / 0x400);
+              }
+            } else if (exponent === 0x1f) {
+              float32 = fraction ? NaN : sign ? -Infinity : Infinity;
+            } else {
+              // Normalized number
+              float32 =
+                (sign ? -1 : 1) *
+                Math.pow(2, exponent - 15) *
+                (1 + fraction / 0x400);
+            }
+            rawArray[i] = float32;
+          }
+
+          for (let i = 0; i < rawArray.length; i += dimensions) {
+            out.push(rawArray.slice(i, i + dimensions));
+          }
+        }
+
+        resolve(out);
+      }
+    };
+    xhr.send();
+  });
 }
 
 function loadAll(spoofMatrix = false) {
+  loadTable("bsb.csv", "|", false).then((table) => {
+    bible = table.slice(1);
+  });
 
-	loadTable("bsb.csv", "|", false)
-	  .then(table => {web = table.slice(1);});
-	  
-	if (spoofMatrix) {
-		webmatrix = [[1,2,3]];
-	} else {
-		// This is old and slow
-		// loadTable("webembed.csv", ",", true)
-		//   .then(matrix => {webmatrix = matrix.slice(1);});
+  if (spoofMatrix) {
+    biblematrix = [[1, 2, 3]];
+  } else {
+    // This is old and slow
+    // loadTable("webembed.csv", ",", true)
+    //   .then(matrix => {webmatrix = matrix.slice(1);});
 
-		// This is smart and fast
-		// let xhr = new XMLHttpRequest();
-		// xhr.open('get', './webembed.binary', true);
-		// xhr.responseType = 'arraybuffer';
-		// xhr.onload = (event) => {
-		// 	const arrayBuffer = xhr.response;
-		// 	if (arrayBuffer) {
-		// 		const rawArray = new Float32Array(arrayBuffer)
-		// 		webmatrix = []
-		// 		const dimensions = 768;
-		// 		for (let i = 0; i < rawArray.length; i+= dimensions) {
-		// 			webmatrix.push(rawArray.slice(i, i + dimensions))
-		// 		}
-		// 	}
-		// }
-		// xhr.send();
-		loadBinary().then(matrix => {webmatrix = matrix})
-		// loadBinary("./webembedpca50.binary", 50).then(matrix => {webmatrixpca = matrix})
-	}
+    // This is smart and fast
+    // let xhr = new XMLHttpRequest();
+    // xhr.open('get', './webembed.binary', true);
+    // xhr.responseType = 'arraybuffer';
+    // xhr.onload = (event) => {
+    // 	const arrayBuffer = xhr.response;
+    // 	if (arrayBuffer) {
+    // 		const rawArray = new Float32Array(arrayBuffer)
+    // 		webmatrix = []
+    // 		const dimensions = 768;
+    // 		for (let i = 0; i < rawArray.length; i+= dimensions) {
+    // 			webmatrix.push(rawArray.slice(i, i + dimensions))
+    // 		}
+    // 	}
+    // }
+    // xhr.send();
+    loadBinary().then((matrix) => {
+      biblematrix = matrix;
+    });
+    // loadBinary("./webembedpca50.binary", 50).then(matrix => {webmatrixpca = matrix})
+  }
 }
 
 var dot = (a, b) => a.map((x, i) => a[i] * b[i]).reduce((m, n) => m + n);
 
 function dotOneToMany(one, matrix) {
-	const dotProducts = [];
-	
-	for (let i = 0; i < matrix.length; i++) {
-		dotProducts.push(dot(one, matrix[i]));
-	}
-	return dotProducts;
+  const dotProducts = [];
+
+  for (let i = 0; i < matrix.length; i++) {
+    dotProducts.push(dot(one, matrix[i]));
+  }
+  return dotProducts;
 }
 
-function argsort(array, ascending=false) {
+function argsort(array, ascending = false) {
   // Create an array of indices [0, 1, 2, ..., n]
   const indices = array.map((value, index) => index);
 
