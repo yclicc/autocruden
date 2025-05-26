@@ -1,62 +1,325 @@
-<html>
+<!doctype html>
+<html lang="en">
     <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AutoCruden</title>
         <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
+                background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+                color: #e0e0e0;
+                min-height: 100vh;
+                line-height: 1.6;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 20px;
+            }
+
+            .search-header {
+                text-align: center;
+                padding: 60px 0 40px;
+            }
+
+            .search-header h1 {
+                font-size: 2.5em;
+                font-weight: 300;
+                margin-bottom: 10px;
+                background: linear-gradient(
+                    45deg,
+                    #4285f4,
+                    #34a853,
+                    #fbbc05,
+                    #ea4335
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .search-header p {
+                color: #9aa0a6;
+                font-size: 1.1em;
+            }
+
+            .search-container {
+                position: relative;
+                max-width: 600px;
+                margin: 0 auto 40px;
+            }
+
+            .search-box {
+                position: relative;
+                width: 100%;
+            }
+
+            #myInput {
+                width: 100%;
+                padding: 18px 24px;
+                font-size: 18px;
+                border: 2px solid #3c4043;
+                border-radius: 30px;
+                background: #2d2d2d;
+                color: #e0e0e0;
+                outline: none;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            }
+
+            #myInput:focus {
+                border-color: #4285f4;
+                box-shadow: 0 8px 25px rgba(66, 133, 244, 0.3);
+            }
+
+            #myInput::placeholder {
+                color: #9aa0a6;
+            }
+
             #suggestions {
                 position: absolute;
-                background-color: #f9f9f9;
-                border: 1px solid #ccc;
-                max-height: 150px;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: #2d2d2d;
+                border: 1px solid #3c4043;
+                border-radius: 20px;
+                max-height: 300px;
                 overflow-y: auto;
-                width: 200px;
+                z-index: 1000;
+                margin-top: 8px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
             }
 
             #suggestions p {
-                padding: 5px;
+                padding: 12px 20px;
                 margin: 0;
                 cursor: pointer;
+                color: #e0e0e0;
+                border-bottom: 1px solid #3c4043;
+                transition: background-color 0.2s ease;
             }
 
             #suggestions p:hover {
-                background-color: #e9e9e9;
+                background-color: #3c4043;
+            }
+
+            #suggestions p:last-child {
+                border-bottom: none;
+            }
+
+            .controls {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 30px;
+                margin-bottom: 40px;
+                flex-wrap: wrap;
+            }
+
+            .radio-group {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .radio-group input[type="radio"] {
+                width: 18px;
+                height: 18px;
+                accent-color: #4285f4;
+            }
+
+            .radio-group label {
+                color: #e0e0e0;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+            .number-input {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .number-input label {
+                color: #e0e0e0;
+                font-size: 16px;
+            }
+
+            #topn-input {
+                padding: 8px 12px;
+                border: 1px solid #3c4043;
+                border-radius: 8px;
+                background: #2d2d2d;
+                color: #e0e0e0;
+                font-size: 16px;
+                width: 80px;
+            }
+
+            .results-container {
+                position: relative;
+                margin-top: 40px;
+            }
+
+            .results-container::after {
+                content: "";
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 100px;
+                background: linear-gradient(transparent, #1a1a1a);
+                pointer-events: none;
+                z-index: 10;
             }
 
             .results-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 20px;
+                background: rgba(45, 45, 45, 0.8);
+                border-radius: 15px;
+                overflow: hidden;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(10px);
             }
 
             .results-table th {
-                font-weight: bold;
+                background: #3c4043;
+                color: #e0e0e0;
+                padding: 20px;
+                font-weight: 600;
+                text-align: left;
+                font-size: 16px;
             }
 
             .results-table td {
+                padding: 16px 20px;
+                border-bottom: 1px solid #3c4043;
+                vertical-align: top;
+            }
+
+            .results-table tr:hover {
+                background: rgba(66, 133, 244, 0.1);
+            }
+
+            .results-table tr:last-child td {
+                border-bottom: none;
+            }
+
+            .verse-location {
+                font-weight: 600;
+                color: #4285f4;
+                min-width: 140px;
+            }
+
+            .verse-text {
+                color: #e0e0e0;
+                line-height: 1.6;
+            }
+
+            .similarity-score {
                 text-align: center;
+                font-family: "Courier New", monospace;
+                color: #34a853;
+                font-weight: 600;
+                min-width: 100px;
+            }
+
+            .loading {
+                text-align: center;
+                padding: 40px;
+                color: #9aa0a6;
+                font-size: 18px;
+            }
+
+            @media (max-width: 768px) {
+                .search-header {
+                    padding: 40px 0 30px;
+                }
+
+                .search-header h1 {
+                    font-size: 2em;
+                }
+
+                .controls {
+                    flex-direction: column;
+                    gap: 20px;
+                }
+
+                .results-table th,
+                .results-table td {
+                    padding: 12px 16px;
+                    font-size: 14px;
+                }
             }
         </style>
     </head>
     <body>
-        Enter the Bible verse to find related:<br /><input
-            type="text"
-            id="myInput"
-            oninput="handleInput()"
-            placeholder="Loading please wait..."
-        />
-        <input
-            type="radio"
-            name="position"
-            value="top"
-            id="top-radio"
-            checked
-        />
-        <label for="top-radio">Most Similar</label>
-        <input type="radio" name="position" value="bottom" id="bottom-radio" />
-        <label for="bottom-radio">Least Similar</label>
-        <input type="number" min="2" max="500" value="20" id="topn-input" />
+        <div class="container">
+            <div class="search-header">
+                <h1>AutoCruden</h1>
+                <p>Enter a verse to find similar verses in the Bible</p>
+            </div>
 
-        <div id="suggestions"></div>
-        <br /><br />
-        <div id="results"></div>
+            <div class="search-container">
+                <div class="search-box">
+                    <input
+                        type="text"
+                        id="myInput"
+                        oninput="handleInput()"
+                        placeholder="Loading please wait..."
+                        autocomplete="off"
+                    />
+                    <div id="suggestions"></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="radio-group">
+                    <input
+                        type="radio"
+                        name="position"
+                        value="top"
+                        id="top-radio"
+                        checked
+                    />
+                    <label for="top-radio">Most Similar</label>
+                </div>
+                <div class="radio-group">
+                    <input
+                        type="radio"
+                        name="position"
+                        value="bottom"
+                        id="bottom-radio"
+                    />
+                    <label for="bottom-radio">Least Similar</label>
+                </div>
+                <div class="number-input">
+                    <label for="topn-input">Results:</label>
+                    <input
+                        type="number"
+                        min="2"
+                        max="500"
+                        value="20"
+                        id="topn-input"
+                    />
+                </div>
+            </div>
+
+            <div class="results-container">
+                <div id="results"></div>
+            </div>
+        </div>
         <script src="load_data.js"></script>
         <script type="text/javascript">
             loadAll();
@@ -196,13 +459,16 @@
                 const row = document.createElement("tr");
                 const bibleItem = bible[index];
                 const verseName = document.createElement("td");
+                verseName.className = "verse-location";
                 verseName.textContent = bibleItem[0];
                 const verseContent = document.createElement("td");
+                verseContent.className = "verse-text";
                 verseContent.textContent = bibleItem[1];
                 row.appendChild(verseName);
                 row.appendChild(verseContent);
                 if (simContent != false) {
                     const sim = document.createElement("td");
+                    sim.className = "similarity-score";
                     sim.textContent = simContent.toFixed(4);
                     row.appendChild(sim);
                 }
