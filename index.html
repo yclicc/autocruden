@@ -86,37 +86,6 @@
                 color: #9aa0a6;
             }
 
-            #suggestions {
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: #2d2d2d;
-                border: 1px solid #3c4043;
-                border-radius: 20px;
-                max-height: 300px;
-                overflow-y: auto;
-                z-index: 1000;
-                margin-top: 8px;
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-            }
-
-            #suggestions p {
-                padding: 12px 20px;
-                margin: 0;
-                cursor: pointer;
-                color: #e0e0e0;
-                border-bottom: 1px solid #3c4043;
-                transition: background-color 0.2s ease;
-            }
-
-            #suggestions p:hover {
-                background-color: #3c4043;
-            }
-
-            #suggestions p:last-child {
-                border-bottom: none;
-            }
 
             .controls {
                 display: flex;
@@ -405,7 +374,6 @@
                         placeholder="Loading please wait..."
                         autocomplete="off"
                     />
-                    <div id="suggestions"></div>
                 </div>
             </div>
 
@@ -619,7 +587,6 @@
             }
 
             const input = document.getElementById("myInput");
-            const suggestions = document.getElementById("suggestions");
             const results = document.getElementById("results");
 
             let searchTimeout;
@@ -694,20 +661,8 @@
                     matchingOptions = trie.search(inputText);
                 }
 
-                suggestions.innerHTML = "";
                 if (matchingOptions.includes(inputText) && enter) {
                     choose();
-                } else if (matchingOptions.length > 1) {
-                    matchingOptions.forEach((option) => {
-                        const p = document.createElement("p");
-                        p.textContent = option;
-                        p.onclick = () => {
-                            input.value = option;
-                            suggestions.innerHTML = "";
-                            choose(); // Search immediately when suggestion is clicked
-                        };
-                        suggestions.appendChild(p);
-                    });
                 } else if (matchingOptions.length == 1) {
                     choose();
                 }
@@ -972,8 +927,14 @@
             }
 
             function choose() {
-                suggestions.innerHTML = "";
                 const inputText = input.value.trim();
+                
+                // Update URL with query parameter
+                if (inputText) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('q', inputText);
+                    window.history.replaceState({}, '', url);
+                }
 
                 if (isVerseReference(inputText)) {
                     // Traditional verse reference search
@@ -994,7 +955,24 @@
                 }
             }
 
+            // Load query from URL parameter on page load
+            function loadQueryFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const query = urlParams.get('q');
+                if (query) {
+                    input.value = query;
+                    // Trigger search after data is loaded
+                    const checkDataLoaded = setInterval(() => {
+                        if (options.length > 0 && window.sentenceTransformerModel) {
+                            clearInterval(checkDataLoaded);
+                            choose();
+                        }
+                    }, 100);
+                }
+            }
+
             getOptions();
+            loadQueryFromURL();
         </script>
     </body>
 </html>
