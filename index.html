@@ -13,7 +13,9 @@
             }
 
             body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
                 background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
                 color: #e0e0e0;
                 min-height: 100vh;
@@ -36,7 +38,13 @@
                 font-size: 2.5em;
                 font-weight: 300;
                 margin-bottom: 10px;
-                background: linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335);
+                background: linear-gradient(
+                    45deg,
+                    #4285f4,
+                    #34a853,
+                    #fbbc05,
+                    #ea4335
+                );
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
@@ -247,6 +255,171 @@
                 color: #bbb;
             }
 
+            /* Visualization Styles */
+            .visualization-container {
+                margin: 20px 0;
+                background: rgba(45, 45, 45, 0.9);
+                border-radius: 15px;
+                padding: 20px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            }
+
+            .visualization-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+
+            .visualization-header h3 {
+                color: #e0e0e0;
+                margin: 0;
+                font-size: 1.2em;
+            }
+
+            .close-viz-btn {
+                background: #666;
+                border: none;
+                color: #fff;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 18px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .close-viz-btn:hover {
+                background: #888;
+            }
+
+            .canvas-container {
+                position: relative;
+                overflow: hidden;
+                max-height: 70vh;
+                border: 1px solid #555;
+                border-radius: 8px;
+                background: #222;
+            }
+
+            @media (max-width: 768px) {
+                .canvas-container {
+                    overflow: auto;
+                    -webkit-overflow-scrolling: touch;
+                }
+
+                .zoom-controls {
+                    display: none;
+                }
+            }
+
+            .canvas-wrapper {
+                position: relative;
+                transform-origin: 0 0;
+                transition: transform 0.1s ease;
+            }
+
+            #similarity-canvas {
+                display: block;
+                cursor: crosshair;
+            }
+
+            .zoom-controls {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                display: flex;
+                gap: 5px;
+                z-index: 100;
+            }
+
+            .zoom-btn {
+                background: rgba(0, 0, 0, 0.7);
+                border: 1px solid #555;
+                color: #fff;
+                width: 30px;
+                height: 30px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .zoom-btn:hover {
+                background: rgba(66, 133, 244, 0.7);
+            }
+
+            .canvas-tooltip {
+                position: absolute;
+                background: rgba(0, 0, 0, 0.9);
+                color: #fff;
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-size: 12px;
+                pointer-events: none;
+                z-index: 1000;
+                display: none;
+                max-width: 300px;
+                line-height: 1.4;
+            }
+
+            .viz-progress-container {
+                background: rgba(0, 0, 0, 0.8);
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 200;
+                border-radius: 8px;
+            }
+
+            .viz-progress-text {
+                color: white;
+                margin-bottom: 15px;
+                font-size: 16px;
+            }
+
+            .viz-progress-bar {
+                width: 300px;
+                height: 8px;
+                background: #333;
+                border-radius: 4px;
+                overflow: hidden;
+                margin-bottom: 10px;
+            }
+
+            .viz-progress-fill {
+                height: 100%;
+                background: linear-gradient(90deg, #34a853 0%, #4285f4 100%);
+                transition: width 0.2s ease;
+                width: 0%;
+            }
+
+            .viz-progress-percent {
+                color: #ccc;
+                font-size: 14px;
+            }
+
+            @media (max-width: 768px) {
+                .viz-progress-bar {
+                    width: 250px;
+                }
+
+                .viz-progress-text {
+                    font-size: 14px;
+                    text-align: center;
+                }
+            }
+
             /* Mobile Responsive Styles */
             @media (max-width: 768px) {
                 .search-header {
@@ -368,6 +541,49 @@
                         id="bottom-radio"
                     />
                     <label for="bottom-radio">Least Similar</label>
+                </div>
+            </div>
+
+            <div
+                id="visualization-container"
+                class="visualization-container"
+                style="display: none"
+            >
+                <div class="visualization-header">
+                    <h3 id="viz-title">Chapter Similarity Visualization</h3>
+                    <button id="close-viz" class="close-viz-btn">×</button>
+                </div>
+                <div class="canvas-container">
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoom-in">+</button>
+                        <button class="zoom-btn" id="zoom-out">−</button>
+                        <button class="zoom-btn" id="zoom-reset">⌂</button>
+                    </div>
+                    <div class="canvas-wrapper" id="canvas-wrapper">
+                        <canvas id="similarity-canvas"></canvas>
+                    </div>
+                    <div id="canvas-tooltip" class="canvas-tooltip"></div>
+                    <div
+                        id="viz-progress"
+                        class="viz-progress-container"
+                        style="display: none"
+                    >
+                        <div class="viz-progress-text">
+                            Calculating similarity matrix...
+                        </div>
+                        <div class="viz-progress-bar">
+                            <div
+                                id="viz-progress-fill"
+                                class="viz-progress-fill"
+                            ></div>
+                        </div>
+                        <div
+                            id="viz-progress-percent"
+                            class="viz-progress-percent"
+                        >
+                            0%
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -523,7 +739,7 @@
 
                 options = bible.map((pair) => pair[0]);
                 options.forEach((option, index) => trie.insert(option, index));
-                input.placeholder = "E.g. John 3:16 or 'God so loved'";
+                input.placeholder = "E.g. John 3:16, John *, or 'God so loved'";
 
                 // Hide loading container after both are complete
                 setTimeout(() => {
@@ -575,9 +791,9 @@
                 // Debounced search as user types with adaptive timing
                 clearTimeout(searchTimeout);
                 if (inputText.trim().length > 0) {
-                    searchTimeout = setTimeout(() => {
+                    searchTimeout = setTimeout(async () => {
                         const performanceEnd = measurePerformance();
-                        choose();
+                        await choose();
                         const duration = performanceEnd();
                         adaptiveDebouncer.updateDebounce(duration);
                     }, adaptiveDebouncer.getDebounceDelay());
@@ -603,11 +819,11 @@
                 }
             });
 
-            topRadio.addEventListener("click", function() {
+            topRadio.addEventListener("click", function () {
                 updateUrlParams();
                 handleInput();
             });
-            bottomRadio.addEventListener("click", function() {
+            bottomRadio.addEventListener("click", function () {
                 updateUrlParams();
                 handleInput();
             });
@@ -645,7 +861,6 @@
                 }
                 return row;
             }
-
 
             function appendResults(index) {
                 clearResults();
@@ -742,7 +957,6 @@
                 }
             }
 
-
             async function performSemanticSearch(queryText) {
                 if (!window.sentenceTransformerModel) {
                     console.log("Sentence transformer model not loaded yet");
@@ -764,7 +978,10 @@
                     const similarities = dotOneToMany(queryVector, biblematrix);
 
                     // Get all results sorted by similarity
-                    const allIndices = argsort(similarities, bottomRadio.checked);
+                    const allIndices = argsort(
+                        similarities,
+                        bottomRadio.checked,
+                    );
 
                     // Prepare all results for infinite scrolling
                     clearResults();
@@ -805,29 +1022,42 @@
             function updateUrlParams() {
                 const inputText = input.value.trim();
                 const isBottomSelected = bottomRadio.checked;
-                
+
                 if (inputText) {
                     const url = new URL(window.location);
                     url.searchParams.set("q", inputText);
-                    
+
                     if (isBottomSelected) {
                         url.searchParams.set("r", "");
                     } else {
                         url.searchParams.delete("r");
                     }
-                    
+
                     window.history.replaceState({}, "", url);
                 }
             }
 
-            function choose() {
+            async function choose() {
                 const inputText = input.value.trim();
+
+                // Check if the trimmed query has actually changed to avoid unnecessary recomputation
+                if (
+                    isVisualizationQuery(inputText) &&
+                    inputText === lastProcessedQuery
+                ) {
+                    return; // Skip recomputation if query hasn't actually changed
+                }
 
                 // Update URL with query parameter
                 updateUrlParams();
 
-                if (isVerseReference(inputText)) {
+                if (isVisualizationQuery(inputText)) {
+                    // Visualization query (ends with *)
+                    lastProcessedQuery = inputText; // Update last processed query
+                    await createVisualization(inputText);
+                } else if (isVerseReference(inputText)) {
                     // Traditional verse reference search
+                    lastProcessedQuery = ""; // Reset since this isn't a visualization query
                     const item = trie
                         .search(inputText, true)
                         .filter((item) => item.word === inputText)[0];
@@ -841,6 +1071,7 @@
                     }
                 } else if (inputText.length > 0) {
                     // Semantic search for non-verse text
+                    lastProcessedQuery = ""; // Reset since this isn't a visualization query
                     performSemanticSearch(inputText);
                 }
             }
@@ -850,21 +1081,44 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const query = urlParams.get("q");
                 const reverse = urlParams.has("r");
-                
+
                 if (query) {
                     input.value = query;
                     // Trigger search after data is loaded
-                    const checkDataLoaded = setInterval(() => {
-                        if (
-                            options.length > 0 &&
-                            window.sentenceTransformerModel
-                        ) {
-                            clearInterval(checkDataLoaded);
-                            choose();
+                    const checkDataLoaded = setInterval(async () => {
+                        // Check if all required functions are loaded
+                        const functionsLoaded =
+                            typeof isVisualizationQuery === "function" &&
+                            typeof parseVisualizationQuery === "function" &&
+                            typeof extractVersesByRange === "function";
+
+                        if (!functionsLoaded) {
+                            return;
+                        }
+
+                        // For visualization queries, only need basic data
+                        if (isVisualizationQuery(query)) {
+                            if (options.length > 0 && bible && biblematrix) {
+                                console.log(
+                                    "URL parameter visualization starting for:",
+                                    query,
+                                );
+                                clearInterval(checkDataLoaded);
+                                await choose();
+                            }
+                        } else {
+                            // For other queries, need sentence transformer model
+                            if (
+                                options.length > 0 &&
+                                window.sentenceTransformerModel
+                            ) {
+                                clearInterval(checkDataLoaded);
+                                await choose();
+                            }
                         }
                     }, 100);
                 }
-                
+
                 // Set radio button based on reverse parameter
                 if (reverse) {
                     bottomRadio.checked = true;
@@ -874,6 +1128,700 @@
                     bottomRadio.checked = false;
                 }
             }
+
+            // Global variable to track current visualization task
+            let currentVisualizationId = 0;
+            let lastProcessedQuery = "";
+
+            // Visualization functions
+            async function createVisualization(query) {
+                // Generate unique ID for this visualization task
+                const taskId = ++currentVisualizationId;
+                console.log(
+                    `Starting visualization task ${taskId} for:`,
+                    query,
+                );
+
+                const parsedQuery = parseVisualizationQuery(query);
+                if (!parsedQuery) {
+                    console.log(`Task ${taskId}: Failed to parse query`);
+                    return;
+                }
+
+                // Check if we've been superseded by a newer task
+                if (taskId !== currentVisualizationId) {
+                    console.log(
+                        `Task ${taskId}: Cancelled - newer task ${currentVisualizationId} started`,
+                    );
+                    return;
+                }
+
+                // Only extract verses for non-comparison queries
+                let verses = [],
+                    chapters = [];
+                if (parsedQuery.type !== "comparison") {
+                    const result = extractVersesByRange(
+                        parsedQuery.book,
+                        parsedQuery.chapter,
+                    );
+                    verses = result.verses;
+                    chapters = result.chapters;
+                    if (verses.length === 0) {
+                        console.log(`Task ${taskId}: No verses found`);
+                        return;
+                    }
+                }
+
+                // Check if biblematrix is available
+                if (!biblematrix) {
+                    console.log(`Task ${taskId}: biblematrix not available`);
+                    return;
+                }
+
+                // Check again if we've been superseded
+                if (taskId !== currentVisualizationId) {
+                    console.log(`Task ${taskId}: Cancelled before drawing`);
+                    return;
+                }
+
+                // Hide results and show visualization
+                clearResults();
+                const vizContainer = document.getElementById(
+                    "visualization-container",
+                );
+                const vizTitle = document.getElementById("viz-title");
+
+                console.log(`Task ${taskId}: Showing visualization container`);
+                vizContainer.style.display = "block";
+
+                if (parsedQuery.type === "comparison") {
+                    console.log(
+                        `Task ${taskId}: Drawing comparison visualization`,
+                    );
+                    const sourceText = parsedQuery.source.chapter
+                        ? `${parsedQuery.source.book} ${parsedQuery.source.chapter}`
+                        : parsedQuery.source.book;
+                    const targetText = parsedQuery.target.chapter
+                        ? `${parsedQuery.target.book} ${parsedQuery.target.chapter}`
+                        : parsedQuery.target.book;
+                    vizTitle.textContent = `Comparison: ${sourceText} vs ${targetText}`;
+                    await drawComparisonVisualization(
+                        parsedQuery.source,
+                        parsedQuery.target,
+                        taskId,
+                    );
+                } else if (parsedQuery.type === "book") {
+                    console.log(`Task ${taskId}: Drawing book visualization`);
+                    vizTitle.textContent = `${parsedQuery.book} - Book Similarity Visualization`;
+                    await drawBookVisualization(verses, chapters, taskId);
+                } else {
+                    console.log(
+                        `Task ${taskId}: Drawing chapter visualization`,
+                    );
+                    vizTitle.textContent = `${parsedQuery.book} ${parsedQuery.chapter} - Chapter Similarity Visualization`;
+                    await drawChapterVisualization(verses, taskId);
+                }
+
+                // Final check before showing result
+                if (taskId === currentVisualizationId) {
+                    console.log(
+                        `Task ${taskId}: Visualization complete and current`,
+                    );
+                } else {
+                    console.log(
+                        `Task ${taskId}: Visualization complete but superseded by ${currentVisualizationId}`,
+                    );
+                    // Don't hide container - let the current task control visibility
+                    return;
+                }
+            }
+
+            async function drawChapterVisualization(verses, taskId) {
+                const canvas = document.getElementById("similarity-canvas");
+                const tooltip = document.getElementById("canvas-tooltip");
+                const canvasContainer = canvas.closest(".canvas-container");
+                const progressContainer =
+                    document.getElementById("viz-progress");
+                const progressFill =
+                    document.getElementById("viz-progress-fill");
+                const progressPercent = document.getElementById(
+                    "viz-progress-percent",
+                );
+
+                const size = verses.length;
+                const cellSize = Math.max(
+                    4,
+                    Math.min(20, Math.floor(600 / size)),
+                );
+                const canvasSize = size * cellSize;
+
+                canvas.width = canvasSize;
+                canvas.height = canvasSize;
+
+                // Calculate initial zoom to fit the visualization in the container
+                const containerRect = canvasContainer.getBoundingClientRect();
+                const maxDimension = Math.min(
+                    containerRect.width - 40,
+                    containerRect.height - 40,
+                );
+                const initialZoom = Math.min(1, maxDimension / canvasSize);
+
+                // Create progress manager
+                const progressManager = createProgressManager(
+                    progressContainer,
+                    progressFill,
+                    progressPercent,
+                    taskId,
+                );
+                progressManager.show();
+
+                // Performance tracking
+                const startTime = performance.now();
+
+                // Calculate similarities using unified function
+                const result = await computeSimilarityMatrix(
+                    verses,
+                    (progress) => progressManager.update(progress),
+                    taskId,
+                    currentVisualizationId,
+                );
+
+                if (!result) {
+                    console.log(`Task ${taskId}: Cancelled during calculation`);
+                    progressManager.hide();
+                    return;
+                }
+
+                const { similarities, dotProductCount } = result;
+
+                // Performance logging
+                const endTime = performance.now();
+                const totalTime = endTime - startTime;
+                const dotProductsPerSecond = Math.round(
+                    (dotProductCount / totalTime) * 1000,
+                );
+                console.log(
+                    `Chapter visualization: ${dotProductCount} dot products in ${Math.round(totalTime)}ms (${dotProductsPerSecond} dot products/sec)`,
+                );
+
+                progressManager.hide();
+
+                // Final cancellation check before drawing
+                if (taskId !== currentVisualizationId) {
+                    console.log(
+                        `Task ${taskId}: Cancelled before canvas drawing`,
+                    );
+                    return;
+                }
+
+                // Draw the heatmap using unified function
+                drawHeatmap(canvas, similarities, verses, cellSize);
+
+                console.log(
+                    `Task ${taskId}: Canvas drawing complete, setting up interaction`,
+                );
+                // Add mouse interaction
+                setupCanvasInteraction(
+                    canvas,
+                    tooltip,
+                    verses,
+                    similarities,
+                    cellSize,
+                    "chapter",
+                    initialZoom,
+                );
+            }
+
+            async function drawBookVisualization(verses, chapters, taskId) {
+                console.log(
+                    `Task ${taskId}: Starting drawBookVisualization with`,
+                    verses.length,
+                    "verses",
+                );
+                const canvas = document.getElementById("similarity-canvas");
+                const tooltip = document.getElementById("canvas-tooltip");
+                const canvasContainer = canvas.closest(".canvas-container");
+
+                // Create expanded verses array with chapter dividers
+                const expandedVerses = [];
+                let currentChapter = verses[0].chapter;
+
+                for (let i = 0; i < verses.length; i++) {
+                    // Add chapter divider if we're starting a new chapter (except for first verse)
+                    if (
+                        verses[i].chapter !== currentChapter &&
+                        expandedVerses.length > 0
+                    ) {
+                        expandedVerses.push({
+                            isDivider: true,
+                            chapter: currentChapter,
+                            nextChapter: verses[i].chapter,
+                        });
+                        currentChapter = verses[i].chapter;
+                    }
+
+                    expandedVerses.push({
+                        ...verses[i],
+                        originalIndex: i,
+                        isDivider: false,
+                    });
+                }
+
+                const size = expandedVerses.length;
+                const cellSize = Math.max(
+                    2,
+                    Math.min(12, Math.floor(800 / size)),
+                );
+                const canvasSize = size * cellSize;
+
+                canvas.width = canvasSize;
+                canvas.height = canvasSize;
+
+                // Calculate initial zoom to fit the visualization in the container
+                const containerRect = canvasContainer.getBoundingClientRect();
+                const maxDimension = Math.min(
+                    containerRect.width - 40,
+                    containerRect.height - 40,
+                );
+                const initialZoom = Math.min(1, maxDimension / canvasSize);
+
+                // Create progress manager
+                const progressContainer =
+                    document.getElementById("viz-progress");
+                const progressFill =
+                    document.getElementById("viz-progress-fill");
+                const progressPercent = document.getElementById(
+                    "viz-progress-percent",
+                );
+                const progressManager = createProgressManager(
+                    progressContainer,
+                    progressFill,
+                    progressPercent,
+                    taskId,
+                );
+                progressManager.show();
+
+                // Performance tracking
+                const startTime = performance.now();
+
+                // Calculate similarities using unified function
+                const result = await computeSimilarityMatrix(
+                    expandedVerses,
+                    (progress) => progressManager.update(progress),
+                    taskId,
+                    currentVisualizationId,
+                );
+
+                if (!result) {
+                    console.log(
+                        `Task ${taskId}: Cancelled during book calculation`,
+                    );
+                    progressManager.hide();
+                    return;
+                }
+
+                const { similarities, dotProductCount } = result;
+
+                // Performance logging
+                const endTime = performance.now();
+                const totalTime = endTime - startTime;
+                const dotProductsPerSecond = Math.round(
+                    (dotProductCount / totalTime) * 1000,
+                );
+                console.log(
+                    `Book visualization: ${dotProductCount} dot products in ${Math.round(totalTime)}ms (${dotProductsPerSecond} dot products/sec)`,
+                );
+
+                progressManager.hide();
+
+                // Final cancellation check before drawing
+                if (taskId !== currentVisualizationId) {
+                    console.log(
+                        `Task ${taskId}: Cancelled before book canvas drawing`,
+                    );
+                    return;
+                }
+
+                // Draw the heatmap using unified function
+                drawHeatmap(canvas, similarities, expandedVerses, cellSize);
+
+                console.log(
+                    `Task ${taskId}: Book canvas drawing complete, setting up interaction`,
+                );
+                // Add mouse interaction
+                setupCanvasInteraction(
+                    canvas,
+                    tooltip,
+                    expandedVerses,
+                    similarities,
+                    cellSize,
+                    "book",
+                    initialZoom,
+                );
+            }
+
+            // Helper function to add chapter dividers to verse arrays
+            function addChapterDividers(verses) {
+                const expandedVerses = [];
+                let currentChapter = verses[0].chapter;
+
+                for (let i = 0; i < verses.length; i++) {
+                    // Add chapter divider if we're starting a new chapter (except for first verse)
+                    if (
+                        verses[i].chapter !== currentChapter &&
+                        expandedVerses.length > 0
+                    ) {
+                        expandedVerses.push({
+                            isDivider: true,
+                            chapter: currentChapter,
+                            nextChapter: verses[i].chapter,
+                        });
+                        currentChapter = verses[i].chapter;
+                    }
+
+                    expandedVerses.push({
+                        ...verses[i],
+                        originalIndex: i,
+                        isDivider: false,
+                    });
+                }
+                return expandedVerses;
+            }
+
+            async function drawComparisonVisualization(
+                sourceQuery,
+                targetQuery,
+                taskId,
+            ) {
+                console.log(
+                    `Task ${taskId}: Starting comparison visualization`,
+                );
+                const canvas = document.getElementById("similarity-canvas");
+                const tooltip = document.getElementById("canvas-tooltip");
+                const canvasContainer = canvas.closest(".canvas-container");
+
+                // Extract verses for both source and target
+                const sourceData = extractVersesByRange(
+                    sourceQuery.book,
+                    sourceQuery.chapter,
+                );
+                const targetData = extractVersesByRange(
+                    targetQuery.book,
+                    targetQuery.chapter,
+                );
+
+                let sourceVerses = sourceData.verses;
+                let targetVerses = targetData.verses;
+
+                // Add chapter dividers for book comparisons (when chapter is null)
+                if (sourceQuery.chapter === null && sourceVerses.length > 0) {
+                    sourceVerses = addChapterDividers(sourceVerses);
+                }
+                if (targetQuery.chapter === null && targetVerses.length > 0) {
+                    targetVerses = addChapterDividers(targetVerses);
+                }
+
+                console.log(
+                    `Task ${taskId}: Source: ${sourceVerses.length} verses, Target: ${targetVerses.length} verses`,
+                );
+
+                if (sourceVerses.length === 0 || targetVerses.length === 0) {
+                    console.log(
+                        `Task ${taskId}: Insufficient verses for comparison`,
+                    );
+                    return;
+                }
+
+                // Canvas dimensions - total size
+                const totalSize = sourceVerses.length + targetVerses.length;
+                const cellSize = Math.max(
+                    2,
+                    Math.min(12, Math.floor(800 / totalSize)),
+                );
+                const canvasSize =
+                    (sourceVerses.length + targetVerses.length) * cellSize;
+
+                canvas.width = canvasSize;
+                canvas.height = canvasSize;
+
+                // Calculate initial zoom
+                const containerRect = canvasContainer.getBoundingClientRect();
+                const maxDimension = Math.min(
+                    containerRect.width - 40,
+                    containerRect.height - 40,
+                );
+                const initialZoom = Math.min(1, maxDimension / canvasSize);
+
+                // Create progress manager
+                const progressContainer =
+                    document.getElementById("viz-progress");
+                const progressFill =
+                    document.getElementById("viz-progress-fill");
+                const progressPercent = document.getElementById(
+                    "viz-progress-percent",
+                );
+                const progressManager = createProgressManager(
+                    progressContainer,
+                    progressFill,
+                    progressPercent,
+                    taskId,
+                );
+                progressManager.show();
+
+                // Performance tracking
+                const startTime = performance.now();
+
+                // Create combined verse array for interaction
+                const allVerses = [...sourceVerses, ...targetVerses];
+
+                // Calculate similarities using unified function
+                const result = await computeSimilarityMatrix(
+                    allVerses,
+                    (progress) => progressManager.update(progress),
+                    taskId,
+                    currentVisualizationId,
+                );
+
+                if (!result) {
+                    console.log(
+                        `Task ${taskId}: Cancelled during comparison calculation`,
+                    );
+                    progressManager.hide();
+                    return;
+                }
+
+                const { similarities, dotProductCount } = result;
+
+                // Performance logging
+                const endTime = performance.now();
+                const totalTime = endTime - startTime;
+                const dotProductsPerSecond = Math.round(
+                    (dotProductCount / totalTime) * 1000,
+                );
+                console.log(
+                    `Comparison visualization: ${dotProductCount} dot products in ${Math.round(totalTime)}ms (${dotProductsPerSecond} dot products/sec)`,
+                );
+
+                progressManager.hide();
+
+                // Final cancellation check
+                if (taskId !== currentVisualizationId) {
+                    console.log(
+                        `Task ${taskId}: Cancelled before comparison drawing`,
+                    );
+                    return;
+                }
+
+                // Draw the heatmap using unified function with comparison mode
+                drawHeatmap(
+                    canvas,
+                    similarities,
+                    allVerses,
+                    cellSize,
+                    "comparison",
+                    sourceVerses.length,
+                );
+
+                console.log(
+                    `Task ${taskId}: Comparison drawing complete, setting up interaction`,
+                );
+                // Set up interaction with combined verse data
+                setupCanvasInteraction(
+                    canvas,
+                    tooltip,
+                    allVerses,
+                    similarities,
+                    cellSize,
+                    "comparison",
+                    initialZoom,
+                );
+            }
+
+            function setupCanvasInteraction(
+                canvas,
+                tooltip,
+                verses,
+                similarities,
+                cellSize,
+                type,
+                initialZoom = 1,
+            ) {
+                const canvasContainer = canvas.closest(".canvas-container");
+                const isMobile = window.innerWidth <= 768;
+                let currentZoom = initialZoom || 1;
+                let homeZoom = initialZoom || 1; // Store the fitted zoom level as "home"
+                let panX = 0,
+                    panY = 0;
+                let isDragging = false;
+                let lastMouseX = 0,
+                    lastMouseY = 0;
+
+                // Zoom functionality
+                function updateTransform() {
+                    const wrapper = document.getElementById("canvas-wrapper");
+                    wrapper.style.transform = `scale(${currentZoom}) translate(${panX}px, ${panY}px)`;
+                }
+
+                // Apply initial zoom immediately
+                updateTransform();
+
+                function zoomAtPoint(x, y, zoomFactor) {
+                    const newZoom = Math.max(
+                        0.1,
+                        Math.min(10, currentZoom * zoomFactor),
+                    );
+
+                    // Calculate the point in the current coordinate system
+                    const pointX = x / currentZoom - panX;
+                    const pointY = y / currentZoom - panY;
+
+                    // Calculate new pan to keep the point under the cursor
+                    panX = x / newZoom - pointX;
+                    panY = y / newZoom - pointY;
+
+                    currentZoom = newZoom;
+                    updateTransform();
+                }
+
+                document
+                    .getElementById("zoom-in")
+                    .addEventListener("click", () => {
+                        // Zoom to center
+                        const containerRect =
+                            canvasContainer.getBoundingClientRect();
+                        const centerX = containerRect.width / 2;
+                        const centerY = containerRect.height / 2;
+                        zoomAtPoint(centerX, centerY, 1.5);
+                    });
+
+                document
+                    .getElementById("zoom-out")
+                    .addEventListener("click", () => {
+                        // Zoom to center
+                        const containerRect =
+                            canvasContainer.getBoundingClientRect();
+                        const centerX = containerRect.width / 2;
+                        const centerY = containerRect.height / 2;
+                        zoomAtPoint(centerX, centerY, 1 / 1.5);
+                    });
+
+                document
+                    .getElementById("zoom-reset")
+                    .addEventListener("click", () => {
+                        currentZoom = homeZoom; // Return to fitted zoom level, not 1:1
+                        panX = 0;
+                        panY = 0;
+                        updateTransform();
+                    });
+
+                // Mouse wheel zoom (desktop only)
+                if (!isMobile) {
+                    canvasContainer.addEventListener("wheel", (e) => {
+                        e.preventDefault();
+                        const rect = canvasContainer.getBoundingClientRect();
+                        const mouseX = e.clientX - rect.left;
+                        const mouseY = e.clientY - rect.top;
+                        const zoomFactor = e.deltaY > 0 ? 0.95 : 1.05;
+                        zoomAtPoint(mouseX, mouseY, zoomFactor);
+                    });
+
+                    // Panning (desktop only)
+                    canvas.addEventListener("mousedown", (e) => {
+                        isDragging = true;
+                        lastMouseX = e.clientX;
+                        lastMouseY = e.clientY;
+                        canvas.style.cursor = "grabbing";
+                    });
+                }
+
+                document.addEventListener("mousemove", (e) => {
+                    if (isDragging && !isMobile) {
+                        const deltaX = (e.clientX - lastMouseX) / currentZoom;
+                        const deltaY = (e.clientY - lastMouseY) / currentZoom;
+                        panX += deltaX;
+                        panY += deltaY;
+                        lastMouseX = e.clientX;
+                        lastMouseY = e.clientY;
+                        updateTransform();
+                    } else if (!isDragging) {
+                        // Tooltip functionality
+                        const rect = canvas.getBoundingClientRect();
+                        const containerRect =
+                            canvasContainer.getBoundingClientRect();
+
+                        // Get mouse position relative to container
+                        const containerX = e.clientX - containerRect.left;
+                        const containerY = e.clientY - containerRect.top;
+
+                        let canvasX, canvasY;
+
+                        if (isMobile) {
+                            // On mobile, account for scroll position but no zoom/pan
+                            canvasX = e.clientX - rect.left;
+                            canvasY = e.clientY - rect.top;
+                        } else {
+                            // On desktop, account for zoom and pan
+                            canvasX = containerX / currentZoom - panX;
+                            canvasY = containerY / currentZoom - panY;
+                        }
+
+                        // Calculate grid position
+                        const col = Math.floor(canvasX / cellSize);
+                        const row = Math.floor(canvasY / cellSize);
+
+                        if (
+                            col >= 0 &&
+                            col < verses.length &&
+                            row >= 0 &&
+                            row < verses.length
+                        ) {
+                            const verse1 = verses[row];
+                            const verse2 = verses[col];
+
+                            // Skip dividers
+                            if (verse1.isDivider || verse2.isDivider) {
+                                tooltip.style.display = "none";
+                                return;
+                            }
+
+                            const similarity = similarities[row][col];
+
+                            tooltip.innerHTML = `
+                                <div><strong>Row:</strong> ${verse1.ref}</div>
+                                <div style="margin-bottom: 5px;">${verse1.text.substring(0, 100)}${verse1.text.length > 100 ? "..." : ""}</div>
+                                <div><strong>Col:</strong> ${verse2.ref}</div>
+                                <div style="margin-bottom: 5px;">${verse2.text.substring(0, 100)}${verse2.text.length > 100 ? "..." : ""}</div>
+                                <div><strong>Similarity:</strong> ${similarity.toFixed(4)}</div>
+                            `;
+
+                            // Position tooltip relative to container
+                            tooltip.style.left = containerX + 10 + "px";
+                            tooltip.style.top = containerY - 10 + "px";
+                            tooltip.style.display = "block";
+                        } else {
+                            tooltip.style.display = "none";
+                        }
+                    }
+                });
+
+                document.addEventListener("mouseup", () => {
+                    isDragging = false;
+                    canvas.style.cursor = "crosshair";
+                });
+
+                canvas.addEventListener("mouseleave", () => {
+                    tooltip.style.display = "none";
+                });
+            }
+
+            // Close visualization button
+            document
+                .getElementById("close-viz")
+                .addEventListener("click", () => {
+                    document.getElementById(
+                        "visualization-container",
+                    ).style.display = "none";
+                });
 
             getOptions();
             loadQueryFromURL();
