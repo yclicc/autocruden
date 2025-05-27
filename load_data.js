@@ -1,5 +1,6 @@
 var bible = false,
-  biblematrix = false;
+  biblematrix = false,
+  wasmModule = null;
 
 var fire = ['#000000', '#060000', '#0d0000', '#120000', '#160000', '#190000', '#1c0000', '#1f0000', '#220000', '#240000', '#260000', '#280000', '#2b0000', '#2d0000', '#2e0000', '#300000', '#320000', '#340000', '#350000', '#370000', '#380000', '#3a0000', '#3b0000', '#3d0000', '#3e0000', '#400000', '#410000', '#430000', '#440000', '#460000', '#470000', '#490000', '#4a0000', '#4c0000', '#4d0000', '#4f0000', '#500000', '#520000', '#530000', '#550000', '#560000', '#580000', '#590100', '#5b0100', '#5d0100', '#5e0100', '#600100', '#610100', '#630100', '#650100', '#660100', '#680100', '#690100', '#6b0100', '#6d0100', '#6e0100', '#700100', '#710100', '#730100', '#750100', '#760100', '#780200', '#7a0200', '#7b0200', '#7d0200', '#7f0200', '#800200', '#820200', '#840200', '#850200', '#870200', '#890200', '#8a0200', '#8c0300', '#8e0300', '#900300', '#910300', '#930300', '#950300', '#960300', '#980300', '#9a0300', '#9c0300', '#9d0400', '#9f0400', '#a10400', '#a20400', '#a40400', '#a60400', '#a80400', '#a90400', '#ab0500', '#ad0500', '#af0500', '#b00500', '#b20500', '#b40500', '#b60600', '#b80600', '#b90600', '#bb0600', '#bd0600', '#bf0700', '#c00700', '#c20700', '#c40700', '#c60800', '#c80800', '#c90800', '#cb0800', '#cd0900', '#cf0900', '#d10900', '#d20a00', '#d40a00', '#d60a00', '#d80b00', '#da0b00', '#db0c00', '#dd0c00', '#df0d00', '#e10d00', '#e30e00', '#e40f00', '#e60f00', '#e81000', '#ea1100', '#eb1300', '#ed1400', '#ee1600', '#f01800', '#f11b00', '#f21d00', '#f32000', '#f52300', '#f62600', '#f62900', '#f72c00', '#f82f00', '#f93200', '#f93500', '#fa3800', '#fa3b00', '#fb3d00', '#fb4000', '#fb4300', '#fc4600', '#fc4900', '#fc4b00', '#fd4e00', '#fd5100', '#fd5300', '#fd5600', '#fd5800', '#fe5b00', '#fe5d00', '#fe5f00', '#fe6200', '#fe6400', '#fe6600', '#fe6800', '#fe6b00', '#fe6d00', '#fe6f00', '#fe7100', '#fe7300', '#fe7500', '#fe7700', '#fe7900', '#fe7c00', '#ff7e00', '#ff8000', '#ff8200', '#ff8300', '#ff8500', '#ff8700', '#ff8900', '#ff8b00', '#ff8d00', '#ff8f00', '#ff9100', '#ff9300', '#ff9400', '#ff9600', '#ff9800', '#ff9a00', '#ff9c00', '#ff9d00', '#ff9f00', '#ffa100', '#ffa300', '#ffa401', '#ffa601', '#ffa801', '#ffaa01', '#ffab01', '#ffad01', '#ffaf01', '#ffb001', '#ffb202', '#ffb402', '#ffb502', '#ffb702', '#ffb902', '#ffba02', '#ffbc03', '#ffbd03', '#ffbf03', '#ffc103', '#ffc204', '#ffc404', '#ffc604', '#ffc704', '#ffc905', '#ffca05', '#ffcc05', '#ffce06', '#ffcf06', '#ffd106', '#ffd207', '#ffd407', '#ffd508', '#ffd708', '#ffd909', '#ffda09', '#ffdc0a', '#ffdd0a', '#ffdf0b', '#ffe00b', '#ffe20c', '#ffe30d', '#ffe50e', '#ffe60f', '#ffe810', '#ffea11', '#ffeb12', '#ffed14', '#ffee17', '#fff01a', '#fff11e', '#fff324', '#fff42a', '#fff532', '#fff73b', '#fff847', '#fff953', '#fffb62', '#fffb72', '#fffc83', '#fffd95', '#fffea8', '#fffeba', '#fffecc', '#fffede', '#fffeee', '#ffffff']
 
@@ -176,7 +177,10 @@ function loadBinary(path = "./bsbembedfast16.binary", dimensions = 384, progress
   });
 }
 
-function loadAll(spoofMatrix = false, progressCallback = null) {
+async function loadAll(spoofMatrix = false, progressCallback = null) {
+  // Load WASM module first
+  wasmModule = await loadWasm();
+  
   loadTable("bsb.csv", "|", false).then((table) => {
     bible = table.slice(1);
   });
@@ -192,9 +196,129 @@ function loadAll(spoofMatrix = false, progressCallback = null) {
 
 var dot = (a, b) => a.map((x, i) => a[i] * b[i]).reduce((m, n) => m + n);
 
-function dotOneToMany(one, matrix) {
-  const dotProducts = [];
+// WebAssembly loader and optimized functions
+async function loadWasm() {
+  try {
+    const wasmResponse = await fetch('./dot_products.wasm');
+    const wasmBytes = await wasmResponse.arrayBuffer();
+    
+    // Create shared memory for WASM
+    const memory = new WebAssembly.Memory({ initial: 1000 }); // Start with 64MB, can grow
+    
+    const wasmModule = await WebAssembly.instantiate(wasmBytes, {
+      env: {
+        memory: memory
+      }
+    });
+    
+    console.log('✅ WebAssembly module loaded successfully');
+    return {
+      instance: wasmModule.instance,
+      memory: memory,
+      available: true
+    };
+  } catch (error) {
+    console.log('⚠️ WebAssembly not available, falling back to JavaScript:', error.message);
+    return { available: false };
+  }
+}
 
+// Optimized dot product using WASM if available
+function dotWasm(a, b) {
+  if (!wasmModule || !wasmModule.available) {
+    return dot(a, b); // Fallback to JS
+  }
+  
+  const dimension = a.length;
+  const bytesPerFloat = 4;
+  const vec1Size = dimension * bytesPerFloat;
+  const vec2Size = dimension * bytesPerFloat;
+  
+  // Allocate memory
+  const vec1Ptr = 0;
+  const vec2Ptr = vec1Size;
+  
+  // Ensure we have enough memory
+  const totalNeeded = vec1Size + vec2Size;
+  const currentPages = wasmModule.memory.buffer.byteLength / (64 * 1024);
+  const neededPages = Math.ceil(totalNeeded / (64 * 1024));
+  if (neededPages > currentPages) {
+    wasmModule.memory.grow(neededPages - currentPages);
+  }
+  
+  // Copy data to WASM memory
+  const memoryView = new Float32Array(wasmModule.memory.buffer);
+  memoryView.set(a, vec1Ptr / bytesPerFloat);
+  memoryView.set(b, vec2Ptr / bytesPerFloat);
+  
+  // Call WASM function
+  return wasmModule.instance.exports.dot_product(vec1Ptr, vec2Ptr, dimension);
+}
+
+// Optimized batch dot product using WASM
+function dotOneToManyWasm(one, matrix) {
+  if (!wasmModule || !wasmModule.available) {
+    return dotOneToMany(one, matrix); // Fallback to JS
+  }
+  
+  const dimension = one.length;
+  const numVectors = matrix.length;
+  const bytesPerFloat = 4;
+  
+  const querySize = dimension * bytesPerFloat;
+  const matrixSize = numVectors * dimension * bytesPerFloat;
+  const resultsSize = numVectors * bytesPerFloat;
+  
+  // Allocate memory
+  const queryPtr = 0;
+  const matrixPtr = querySize;
+  const resultsPtr = querySize + matrixSize;
+  
+  // Ensure we have enough memory
+  const totalNeeded = querySize + matrixSize + resultsSize;
+  const currentPages = wasmModule.memory.buffer.byteLength / (64 * 1024);
+  const neededPages = Math.ceil(totalNeeded / (64 * 1024));
+  if (neededPages > currentPages) {
+    wasmModule.memory.grow(neededPages - currentPages);
+  }
+  
+  // Copy data to WASM memory
+  const memoryView = new Float32Array(wasmModule.memory.buffer);
+  memoryView.set(one, queryPtr / bytesPerFloat);
+  
+  // Copy matrix data
+  let offset = matrixPtr / bytesPerFloat;
+  for (let i = 0; i < matrix.length; i++) {
+    memoryView.set(matrix[i], offset);
+    offset += dimension;
+  }
+  
+  // Call WASM function
+  wasmModule.instance.exports.dot_product_batch(queryPtr, matrixPtr, numVectors, dimension, resultsPtr);
+  
+  // Read results
+  const results = new Array(numVectors);
+  for (let i = 0; i < numVectors; i++) {
+    results[i] = memoryView[resultsPtr / bytesPerFloat + i];
+  }
+  
+  return results;
+}
+
+function dotOneToMany(one, matrix) {
+  // Use WASM if available for batch processing
+  if (wasmModule && wasmModule.available && matrix.length > 100) {
+    console.log(`🚀 Using WASM for batch dot product calculation (${matrix.length} vectors)`);
+    const startTime = performance.now();
+    const result = dotOneToManyWasm(one, matrix);
+    const endTime = performance.now();
+    const dotProductsPerSecond = Math.round((matrix.length / (endTime - startTime)) * 1000);
+    console.log(`⚡ WASM batch dot products: ${matrix.length} calculations in ${Math.round(endTime - startTime)}ms (${dotProductsPerSecond} dot products/sec)`);
+    return result;
+  }
+  
+  // Fallback to JavaScript
+  const dotProducts = [];
   for (let i = 0; i < matrix.length; i++) {
     dotProducts.push(dot(one, matrix[i]));
   }
@@ -473,7 +597,7 @@ function getKbcColor(value) {
   return kbc[index];
 }
 
-// Unified similarity matrix calculation with progress tracking
+// Unified similarity matrix calculation with progress tracking and WASM optimization
 async function computeSimilarityMatrix(verses, progressCallback, taskId, currentVisualizationId) {
   const size = verses.length;
   const similarities = [];
@@ -481,11 +605,74 @@ async function computeSimilarityMatrix(verses, progressCallback, taskId, current
   let completed = 0;
   let dotProductCount = 0;
 
+  // Performance tracking
+  const startTime = performance.now();
+  const useWasm = wasmModule && wasmModule.available;
+  
+  console.log(`🔧 Computing similarity matrix using ${useWasm ? 'WebAssembly' : 'JavaScript'} (${size}x${size} matrix, ${totalCalculations} calculations)`);
+
   // Initialize matrix
   for (let i = 0; i < size; i++) {
     similarities[i] = [];
   }
 
+  // Try using WASM optimized version for large matrices if available
+  if (useWasm && size > 10) {
+    try {
+      const nonDividerVerses = verses.filter(v => !v.isDivider);
+      if (nonDividerVerses.length > 5) {
+        console.log(`🚀 Attempting WASM batch calculation for ${nonDividerVerses.length} non-divider verses`);
+        
+        // Create a mapping from verse indices to matrix positions
+        const verseIndexMap = new Map();
+        nonDividerVerses.forEach((verse, idx) => {
+          verseIndexMap.set(verse.index, idx);
+        });
+        
+        // Extract embeddings for non-divider verses
+        const embeddings = nonDividerVerses.map(verse => biblematrix[verse.index]);
+        
+        // Use WASM for the heavy computation
+        const wasmStartTime = performance.now();
+        const result = await computeSimilarityMatrixWasm(embeddings, progressCallback, taskId, currentVisualizationId);
+        const wasmEndTime = performance.now();
+        
+        if (result) {
+          console.log(`⚡ WASM computation completed in ${Math.round(wasmEndTime - wasmStartTime)}ms`);
+          
+          // Map WASM results back to the full similarity matrix
+          for (let i = 0; i < size; i++) {
+            for (let j = 0; j < size; j++) {
+              const verse1 = verses[i];
+              const verse2 = verses[j];
+              
+              if (verse1.isDivider || verse2.isDivider) {
+                similarities[i][j] = -1;
+              } else {
+                const wasmI = verseIndexMap.get(verse1.index);
+                const wasmJ = verseIndexMap.get(verse2.index);
+                similarities[i][j] = result.similarities[wasmI][wasmJ];
+              }
+            }
+          }
+          
+          const totalTime = performance.now() - startTime;
+          const totalDotProducts = result.dotProductCount;
+          const dotProductsPerSecond = Math.round((totalDotProducts / totalTime) * 1000);
+          
+          console.log(`✅ WASM Matrix computation: ${totalDotProducts} dot products in ${Math.round(totalTime)}ms (${dotProductsPerSecond} dot products/sec)`);
+          
+          return { similarities, dotProductCount: totalDotProducts };
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️ WASM computation failed, falling back to JavaScript:`, error);
+    }
+  }
+
+  // Fallback to JavaScript implementation
+  console.log(`🔄 Using JavaScript fallback for similarity matrix calculation`);
+  
   for (let i = 0; i < size; i++) {
     for (let j = i; j < size; j++) {
       const verse1 = verses[i];
@@ -495,7 +682,9 @@ async function computeSimilarityMatrix(verses, progressCallback, taskId, current
       if (verse1.isDivider || verse2.isDivider) {
         sim = -1; // Black for dividers
       } else {
-        sim = dot(biblematrix[verse1.index], biblematrix[verse2.index]);
+        // Use WASM for individual dot products if available, otherwise JS
+        sim = useWasm ? dotWasm(biblematrix[verse1.index], biblematrix[verse2.index]) : 
+                       dot(biblematrix[verse1.index], biblematrix[verse2.index]);
         dotProductCount++;
       }
       similarities[i][j] = sim;
@@ -521,7 +710,65 @@ async function computeSimilarityMatrix(verses, progressCallback, taskId, current
     }
   }
 
+  const totalTime = performance.now() - startTime;
+  const dotProductsPerSecond = Math.round((dotProductCount / totalTime) * 1000);
+  
+  console.log(`✅ JS Matrix computation: ${dotProductCount} dot products in ${Math.round(totalTime)}ms (${dotProductsPerSecond} dot products/sec)`);
+
   return { similarities, dotProductCount };
+}
+
+// WASM-optimized similarity matrix calculation
+async function computeSimilarityMatrixWasm(embeddings, progressCallback, taskId, currentVisualizationId) {
+  if (!wasmModule || !wasmModule.available) {
+    return null;
+  }
+  
+  const size = embeddings.length;
+  const dimension = embeddings[0].length;
+  const totalCalculations = (size * (size + 1)) / 2;
+  
+  const bytesPerFloat = 4;
+  const matrixSize = size * dimension * bytesPerFloat;
+  const resultsSize = size * size * bytesPerFloat;
+  
+  // Allocate memory
+  const matrixPtr = 0;
+  const resultsPtr = matrixSize;
+  
+  // Ensure we have enough memory
+  const totalNeeded = matrixSize + resultsSize;
+  const currentPages = wasmModule.memory.buffer.byteLength / (64 * 1024);
+  const neededPages = Math.ceil(totalNeeded / (64 * 1024));
+  if (neededPages > currentPages) {
+    wasmModule.memory.grow(neededPages - currentPages);
+  }
+  
+  // Copy matrix data to WASM memory
+  const memoryView = new Float32Array(wasmModule.memory.buffer);
+  let offset = matrixPtr / bytesPerFloat;
+  for (let i = 0; i < size; i++) {
+    memoryView.set(embeddings[i], offset);
+    offset += dimension;
+  }
+  
+  // Call WASM function (this does the heavy lifting)
+  wasmModule.instance.exports.similarity_matrix(matrixPtr, size, dimension, resultsPtr);
+  
+  // Read results back into JavaScript matrix
+  const similarities = [];
+  for (let i = 0; i < size; i++) {
+    similarities[i] = [];
+    for (let j = 0; j < size; j++) {
+      const index = i * size + j;
+      similarities[i][j] = memoryView[resultsPtr / bytesPerFloat + index];
+    }
+  }
+  
+  return { 
+    similarities, 
+    dotProductCount: totalCalculations 
+  };
 }
 
 // Unified heatmap drawing function
