@@ -276,6 +276,12 @@
                 margin: 0;
                 font-size: 1.2em;
             }
+            
+            .header-controls {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
 
             .close-viz-btn {
                 background: #666;
@@ -306,13 +312,13 @@
 
             @media (max-width: 768px) {
                 .canvas-container {
-                    overflow: auto;
-                    -webkit-overflow-scrolling: touch;
+                    overflow: hidden;
                 }
 
-                .zoom-controls {
-                    display: none;
+                .canvas-wrapper {
+                    touch-action: none;
                 }
+
             }
 
             .canvas-wrapper {
@@ -324,12 +330,12 @@
             #similarity-canvas {
                 display: block;
                 cursor: crosshair;
+                image-rendering: pixelated;
+                image-rendering: -moz-crisp-edges;
+                image-rendering: crisp-edges;
             }
 
             .zoom-controls {
-                position: absolute;
-                top: 10px;
-                right: 10px;
                 display: flex;
                 gap: 5px;
                 z-index: 100;
@@ -347,10 +353,32 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                user-select: none;
+                -webkit-user-select: none;
+                -webkit-tap-highlight-color: transparent;
+                outline: none;
+                transition: background-color 0.1s ease, transform 0.1s ease;
             }
 
             .zoom-btn:hover {
                 background: rgba(66, 133, 244, 0.7);
+            }
+            
+            .zoom-btn:active {
+                background: rgba(66, 133, 244, 0.9);
+                transform: scale(0.95);
+            }
+            
+            .zoom-btn:focus {
+                outline: none;
+            }
+            
+            @media (max-width: 768px) {
+                .zoom-btn {
+                    width: 40px;
+                    height: 40px;
+                    font-size: 18px;
+                }
             }
 
             .canvas-tooltip {
@@ -551,14 +579,16 @@
             >
                 <div class="visualization-header">
                     <h3 id="viz-title">Chapter Similarity Visualization</h3>
-                    <button id="close-viz" class="close-viz-btn">×</button>
+                    <div class="header-controls">
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" id="zoom-in">+</button>
+                            <button class="zoom-btn" id="zoom-out">−</button>
+                            <button class="zoom-btn" id="zoom-reset">⌂</button>
+                        </div>
+                        <button id="close-viz" class="close-viz-btn">×</button>
+                    </div>
                 </div>
                 <div class="canvas-container">
-                    <div class="zoom-controls">
-                        <button class="zoom-btn" id="zoom-in">+</button>
-                        <button class="zoom-btn" id="zoom-out">−</button>
-                        <button class="zoom-btn" id="zoom-reset">⌂</button>
-                    </div>
                     <div class="canvas-wrapper" id="canvas-wrapper">
                         <canvas id="similarity-canvas"></canvas>
                     </div>
@@ -663,18 +693,12 @@
                             "AI Model loaded successfully!";
                     }
 
-                    // Check if both components are ready to hide loading
+                    // Check if loading should be hidden
                     setTimeout(() => {
-                        const loadingContainer =
-                            document.getElementById("loading-container");
-                        if (
-                            window.sentenceTransformerModel &&
-                            bible &&
-                            biblematrix
-                        ) {
-                            loadingContainer.classList.add("hidden");
+                        if (window.checkAndHideLoading) {
+                            window.checkAndHideLoading();
                         }
-                    }, 1000);
+                    }, 500);
                 } catch (error) {
                     modelStatus.textContent = "Failed to load AI model";
                     modelProgress.style.backgroundColor = "#f44336";
@@ -685,11 +709,28 @@
                 }
             }
 
+            // Centralized function to check if loading should be hidden
+            function checkAndHideLoading() {
+                const loadingContainer = document.getElementById("loading-container");
+                if (loadingContainer && !loadingContainer.classList.contains("hidden")) {
+                    // Check if core data is loaded (different requirements for different features)
+                    const coreDataLoaded = bible && biblematrix && options.length > 0;
+                    const modelLoaded = window.sentenceTransformerModel;
+                    
+                    // Hide if core data is ready (visualizations don't need the AI model)
+                    if (coreDataLoaded) {
+                        loadingContainer.classList.add("hidden");
+                        console.log("Loading screen hidden - core data ready");
+                    }
+                }
+            }
+
             // Initialize the model immediately
             initSentenceTransformer();
 
             // Also expose it globally for manual initialization if needed
             window.initSentenceTransformer = initSentenceTransformer;
+            window.checkAndHideLoading = checkAndHideLoading;
         </script>
         <script type="text/javascript">
             // Create progress callback for embeddings loading
@@ -716,6 +757,12 @@
                     embeddingsProgress.style.width = "100%";
                     embeddingsStatus.textContent =
                         "Biblical embeddings loaded!";
+                    // Check if we can hide loading now
+                    setTimeout(() => {
+                        if (window.checkAndHideLoading) {
+                            window.checkAndHideLoading();
+                        }
+                    }, 100);
                 } else if (data.status === "error") {
                     embeddingsProgress.style.backgroundColor = "#f44336";
                     embeddingsStatus.textContent = "Failed to load embeddings";
@@ -741,18 +788,12 @@
                 options.forEach((option, index) => trie.insert(option, index));
                 input.placeholder = "E.g. John 3:16, John *, or 'God so loved'";
 
-                // Hide loading container after both are complete
+                // Check if loading should be hidden
                 setTimeout(() => {
-                    const loadingContainer =
-                        document.getElementById("loading-container");
-                    if (
-                        window.sentenceTransformerModel &&
-                        bible &&
-                        biblematrix
-                    ) {
-                        loadingContainer.classList.add("hidden");
+                    if (window.checkAndHideLoading) {
+                        window.checkAndHideLoading();
                     }
-                }, 1000);
+                }, 500);
             }
 
             const input = document.getElementById("myInput");
@@ -1557,6 +1598,53 @@
 
                 // Apply initial zoom immediately
                 updateTransform();
+                
+                // Zoom control buttons (work on both mobile and desktop)
+                const zoomInBtn = document.getElementById("zoom-in");
+                const zoomOutBtn = document.getElementById("zoom-out");
+                const zoomResetBtn = document.getElementById("zoom-reset");
+                
+                // Remove any existing listeners to avoid duplicates
+                zoomInBtn.replaceWith(zoomInBtn.cloneNode(true));
+                zoomOutBtn.replaceWith(zoomOutBtn.cloneNode(true)); 
+                zoomResetBtn.replaceWith(zoomResetBtn.cloneNode(true));
+                
+                // Re-get references after cloning
+                const newZoomInBtn = document.getElementById("zoom-in");
+                const newZoomOutBtn = document.getElementById("zoom-out");
+                const newZoomResetBtn = document.getElementById("zoom-reset");
+
+                // Function to handle zoom in
+                function handleZoomIn() {
+                    console.log("Zoom in triggered"); 
+                    const containerRect = canvasContainer.getBoundingClientRect();
+                    const centerX = containerRect.width / 2;
+                    const centerY = containerRect.height / 2;
+                    zoomAtPoint(centerX, centerY, 1.5);
+                }
+                
+                // Function to handle zoom out
+                function handleZoomOut() {
+                    console.log("Zoom out triggered");
+                    const containerRect = canvasContainer.getBoundingClientRect();
+                    const centerX = containerRect.width / 2;
+                    const centerY = containerRect.height / 2;
+                    zoomAtPoint(centerX, centerY, 1 / 1.5);
+                }
+                
+                // Function to handle zoom reset
+                function handleZoomReset() {
+                    console.log("Zoom reset triggered");
+                    currentZoom = homeZoom;
+                    panX = 0;
+                    panY = 0;
+                    updateTransform();
+                }
+
+                // Simple event handlers now that buttons are outside canvas container
+                newZoomInBtn.addEventListener("click", handleZoomIn);
+                newZoomOutBtn.addEventListener("click", handleZoomOut);
+                newZoomResetBtn.addEventListener("click", handleZoomReset);
 
                 function zoomAtPoint(x, y, zoomFactor) {
                     const newZoom = Math.max(
@@ -1576,36 +1664,11 @@
                     updateTransform();
                 }
 
-                document
-                    .getElementById("zoom-in")
-                    .addEventListener("click", () => {
-                        // Zoom to center
-                        const containerRect =
-                            canvasContainer.getBoundingClientRect();
-                        const centerX = containerRect.width / 2;
-                        const centerY = containerRect.height / 2;
-                        zoomAtPoint(centerX, centerY, 1.5);
-                    });
 
-                document
-                    .getElementById("zoom-out")
-                    .addEventListener("click", () => {
-                        // Zoom to center
-                        const containerRect =
-                            canvasContainer.getBoundingClientRect();
-                        const centerX = containerRect.width / 2;
-                        const centerY = containerRect.height / 2;
-                        zoomAtPoint(centerX, centerY, 1 / 1.5);
-                    });
-
-                document
-                    .getElementById("zoom-reset")
-                    .addEventListener("click", () => {
-                        currentZoom = homeZoom; // Return to fitted zoom level, not 1:1
-                        panX = 0;
-                        panY = 0;
-                        updateTransform();
-                    });
+                // Touch variables for mobile pinch zoom
+                let initialDistance = 0;
+                let initialTouchZoom = 1;
+                let touches = [];
 
                 // Mouse wheel zoom (desktop only)
                 if (!isMobile) {
@@ -1624,6 +1687,160 @@
                         lastMouseX = e.clientX;
                         lastMouseY = e.clientY;
                         canvas.style.cursor = "grabbing";
+                    });
+                } else {
+                    // Mobile touch events for pinch zoom and panning
+                    let touchStartX = 0, touchStartY = 0;
+                    let isPanning = false;
+                    let longPressTimer = null;
+                    let longPressTriggered = false;
+                    
+                    
+                    function getTouchDistance(touches) {
+                        if (touches.length < 2) return 0;
+                        const dx = touches[0].clientX - touches[1].clientX;
+                        const dy = touches[0].clientY - touches[1].clientY;
+                        return Math.sqrt(dx * dx + dy * dy);
+                    }
+
+                    function getTouchCenter(touches) {
+                        if (touches.length < 2) return { x: 0, y: 0 };
+                        const rect = canvasContainer.getBoundingClientRect();
+                        return {
+                            x: (touches[0].clientX + touches[1].clientX) / 2 - rect.left,
+                            y: (touches[0].clientY + touches[1].clientY) / 2 - rect.top
+                        };
+                    }
+
+                    canvasContainer.addEventListener("touchstart", (e) => {
+                        if (e.touches.length === 1) {
+                            // Single finger - start panning and set up long press
+                            e.preventDefault();
+                            isPanning = true;
+                            longPressTriggered = false;
+                            touchStartX = e.touches[0].clientX;
+                            touchStartY = e.touches[0].clientY;
+                            
+                            // Hide any existing tooltip before starting new one
+                            tooltip.style.display = "none";
+                            
+                            // Set up long press timer for tooltip
+                            longPressTimer = setTimeout(() => {
+                                longPressTriggered = true;
+                                isPanning = false; // Stop panning when showing tooltip
+                                
+                                // Show tooltip at touch position
+                                const rect = canvasContainer.getBoundingClientRect();
+                                const containerX = e.touches[0].clientX - rect.left;
+                                const containerY = e.touches[0].clientY - rect.top;
+                                
+                                // Account for zoom and pan
+                                const canvasX = containerX / currentZoom - panX;
+                                const canvasY = containerY / currentZoom - panY;
+                                
+                                // Calculate grid position
+                                const col = Math.floor(canvasX / cellSize);
+                                const row = Math.floor(canvasY / cellSize);
+                                
+                                if (col >= 0 && col < verses.length && row >= 0 && row < verses.length) {
+                                    const verse1 = verses[row];
+                                    const verse2 = verses[col];
+                                    
+                                    // Skip dividers
+                                    if (!verse1.isDivider && !verse2.isDivider) {
+                                        const similarity = similarities[row][col];
+                                        
+                                        tooltip.innerHTML = `
+                                            <div><strong>Row:</strong> ${verse1.ref}</div>
+                                            <div style="margin-bottom: 5px;">${verse1.text.substring(0, 100)}${verse1.text.length > 100 ? "..." : ""}</div>
+                                            <div><strong>Col:</strong> ${verse2.ref}</div>
+                                            <div style="margin-bottom: 5px;">${verse2.text.substring(0, 100)}${verse2.text.length > 100 ? "..." : ""}</div>
+                                            <div><strong>Similarity:</strong> ${similarity.toFixed(4)}</div>
+                                        `;
+                                        
+                                        // Position tooltip relative to container
+                                        tooltip.style.left = containerX + 10 + "px";
+                                        tooltip.style.top = containerY - 10 + "px";
+                                        tooltip.style.display = "block";
+                                    }
+                                }
+                            }, 800); // 800ms long press
+                        } else if (e.touches.length === 2) {
+                            // Two fingers - start zooming
+                            e.preventDefault();
+                            isPanning = false;
+                            clearTimeout(longPressTimer);
+                            tooltip.style.display = "none";
+                            touches = Array.from(e.touches);
+                            initialDistance = getTouchDistance(touches);
+                            initialTouchZoom = currentZoom;
+                        }
+                    }, { passive: false });
+
+                    canvasContainer.addEventListener("touchmove", (e) => {
+                        e.preventDefault();
+                        
+                        if (e.touches.length === 1 && isPanning && !longPressTriggered) {
+                            // Single finger panning (only if not showing tooltip)
+                            const deltaX = (e.touches[0].clientX - touchStartX) / currentZoom;
+                            const deltaY = (e.touches[0].clientY - touchStartY) / currentZoom;
+                            panX += deltaX;
+                            panY += deltaY;
+                            touchStartX = e.touches[0].clientX;
+                            touchStartY = e.touches[0].clientY;
+                            updateTransform();
+                            
+                            // Cancel long press if user moves finger
+                            clearTimeout(longPressTimer);
+                        } else if (e.touches.length === 1 && longPressTriggered) {
+                            // Hide tooltip and start panning when user moves after long press
+                            tooltip.style.display = "none";
+                            longPressTriggered = false;
+                            isPanning = true;
+                            touchStartX = e.touches[0].clientX;
+                            touchStartY = e.touches[0].clientY;
+                        } else if (e.touches.length === 2 && touches.length === 2) {
+                            // Two finger pinch zoom
+                            const currentDistance = getTouchDistance(Array.from(e.touches));
+                            if (initialDistance > 0) {
+                                const zoomFactor = currentDistance / initialDistance;
+                                const newZoom = Math.max(0.1, Math.min(10, initialTouchZoom * zoomFactor));
+                                const center = getTouchCenter(Array.from(e.touches));
+                                
+                                // Calculate the point in the current coordinate system
+                                const pointX = center.x / currentZoom - panX;
+                                const pointY = center.y / currentZoom - panY;
+                                
+                                // Calculate new pan to keep the center point stable
+                                panX = center.x / newZoom - pointX;
+                                panY = center.y / newZoom - pointY;
+                                
+                                currentZoom = newZoom;
+                                updateTransform();
+                            }
+                        }
+                    }, { passive: false });
+
+                    canvasContainer.addEventListener("touchend", (e) => {
+                        if (e.touches.length === 0) {
+                            // All fingers lifted
+                            isPanning = false;
+                            touches = [];
+                            initialDistance = 0;
+                            clearTimeout(longPressTimer);
+                            
+                            // Don't auto-hide tooltip on mobile - let user pan/zoom to dismiss
+                        } else if (e.touches.length === 1) {
+                            // Went from two fingers to one - restart panning
+                            isPanning = true;
+                            longPressTriggered = false;
+                            touchStartX = e.touches[0].clientX;
+                            touchStartY = e.touches[0].clientY;
+                            touches = [];
+                            initialDistance = 0;
+                            clearTimeout(longPressTimer);
+                            tooltip.style.display = "none";
+                        }
                     });
                 }
 

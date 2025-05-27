@@ -541,7 +541,11 @@ function extractVersesByRange(book, chapter = null) {
     const verseChapter = parseInt(match[2]);
     const verseNumber = parseInt(match[3]);
     
-    if (verseBook.toLowerCase() === book.toLowerCase()) {
+    // Handle specific case where "Psalms" should match "Psalm"
+    const normalizedVerseBook = verseBook.toLowerCase();
+    const normalizedSearchBook = book.toLowerCase() === 'psalms' ? 'psalm' : book.toLowerCase();
+    
+    if (normalizedVerseBook === normalizedSearchBook) {
       if (chapter === null) {
         // Entire book
         verses.push({
@@ -743,6 +747,13 @@ async function computeSimilarityMatrixWasm(embeddings, progressCallback, taskId,
 // Unified heatmap drawing function
 function drawHeatmap(canvas, similarities, verses, cellSize, type = 'default', sourceSize = null) {
   const ctx = canvas.getContext('2d');
+  
+  // Disable image smoothing for crisp pixel rendering
+  ctx.imageSmoothingEnabled = false;
+  ctx.webkitImageSmoothingEnabled = false;
+  ctx.mozImageSmoothingEnabled = false;
+  ctx.msImageSmoothingEnabled = false;
+  
   const size = verses.length;
 
   for (let i = 0; i < size; i++) {
