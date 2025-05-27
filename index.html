@@ -89,6 +89,59 @@
                 color: #9aa0a6;
             }
 
+            /* Suggestion Pills Styles */
+            .suggestion-pills {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 12px;
+                margin: 20px 0 30px;
+                flex-wrap: wrap;
+            }
+
+            .suggestion-pill {
+                background: rgba(66, 133, 244, 0.1);
+                border: 1px solid rgba(66, 133, 244, 0.3);
+                color: #4285f4;
+                padding: 8px 16px;
+                border-radius: 20px;
+                text-decoration: none;
+                font-size: 14px;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                cursor: pointer;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .suggestion-pill:hover {
+                background: rgba(66, 133, 244, 0.2);
+                border-color: rgba(66, 133, 244, 0.5);
+                color: #3367d6;
+                transform: translateY(-1px);
+            }
+
+            .suggestion-pill:active {
+                transform: translateY(0);
+                background: rgba(66, 133, 244, 0.25);
+            }
+
+            .suggestion-pills.hidden {
+                display: none;
+            }
+
+            @media (max-width: 768px) {
+                .suggestion-pills {
+                    gap: 8px;
+                    margin: 15px 0 25px;
+                }
+
+                .suggestion-pill {
+                    font-size: 13px;
+                    padding: 6px 12px;
+                }
+            }
+
             /* Controls Styles */
             .controls {
                 display: flex;
@@ -550,6 +603,13 @@
                 </div>
             </div>
 
+            <div id="suggestion-pills" class="suggestion-pills">
+                <div class="suggestion-pill" data-query="John 3:16">John 3:16</div>
+                <div class="suggestion-pill" data-query="God so loved">God so loved</div>
+                <div class="suggestion-pill" data-query="Philippians 2 *">Analyse Philippians 2</div>
+                <div class="suggestion-pill" data-query="Ezra * Nehemiah *">Compare Ezra and Nehemiah</div>
+            </div>
+
             <div class="controls">
                 <div class="radio-group">
                     <input
@@ -720,7 +780,6 @@
                     // Hide if core data is ready (visualizations don't need the AI model)
                     if (coreDataLoaded) {
                         loadingContainer.classList.add("hidden");
-                        console.log("Loading screen hidden - core data ready");
                     }
                 }
             }
@@ -793,6 +852,10 @@
                     if (window.checkAndHideLoading) {
                         window.checkAndHideLoading();
                     }
+                    // Show suggestion pills if no query in input
+                    if (input.value.trim().length === 0) {
+                        showSuggestionPills();
+                    }
                 }, 500);
             }
 
@@ -800,6 +863,7 @@
             const results = document.getElementById("results");
             const topRadio = document.getElementById("top-radio");
             const bottomRadio = document.getElementById("bottom-radio");
+            const suggestionPills = document.getElementById("suggestion-pills");
 
             let searchTimeout;
             const adaptiveDebouncer = createAdaptiveDebouncer();
@@ -810,8 +874,41 @@
             let isLoading = false;
             const BATCH_SIZE = 50; // Load 50 results at a time
 
+            // Set up suggestion pill click handlers
+            function setupSuggestionPills() {
+                const pills = suggestionPills.querySelectorAll('.suggestion-pill');
+                pills.forEach(pill => {
+                    pill.addEventListener('click', () => {
+                        const query = pill.getAttribute('data-query');
+                        input.value = query;
+                        updateUrlParams();
+                        handleInput(true); // Trigger search immediately
+                        hideSuggestionPills();
+                    });
+                });
+            }
+
+            // Show/hide suggestion pills
+            function showSuggestionPills() {
+                suggestionPills.classList.remove('hidden');
+            }
+
+            function hideSuggestionPills() {
+                suggestionPills.classList.add('hidden');
+            }
+
+            // Initialize suggestion pills
+            setupSuggestionPills();
+
             async function handleInput(enter = false) {
                 const inputText = input.value;
+
+                // Show/hide suggestion pills based on input
+                if (inputText.trim().length === 0) {
+                    showSuggestionPills();
+                } else {
+                    hideSuggestionPills();
+                }
 
                 // Load options if not already loaded
                 if (options.length === 0) {
@@ -950,6 +1047,16 @@
                 currentResults = [];
                 displayedCount = 0;
                 isLoading = false;
+                
+                // Show suggestion pills if input is empty
+                if (input.value.trim().length === 0) {
+                    showSuggestionPills();
+                    // Also hide visualization container when input is completely cleared
+                    const vizContainer = document.getElementById("visualization-container");
+                    if (vizContainer.style.display === "block") {
+                        vizContainer.style.display = "none";
+                    }
+                }
             }
 
             function loadMoreResults() {
@@ -1055,7 +1162,6 @@
                     // Load first batch of results
                     loadMoreResults();
                 } catch (error) {
-                    console.error("Error performing semantic search:", error);
                 }
             }
 
@@ -1080,6 +1186,9 @@
             async function choose() {
                 const inputText = input.value.trim();
 
+                // Hide suggestion pills when performing search
+                hideSuggestionPills();
+
                 // Check if the trimmed query has actually changed to avoid unnecessary recomputation
                 if (
                     isVisualizationQuery(inputText) &&
@@ -1095,24 +1204,33 @@
                     // Visualization query (ends with *)
                     lastProcessedQuery = inputText; // Update last processed query
                     await createVisualization(inputText);
-                } else if (isVerseReference(inputText)) {
-                    // Traditional verse reference search
-                    lastProcessedQuery = ""; // Reset since this isn't a visualization query
-                    const item = trie
-                        .search(inputText, true)
-                        .filter((item) => item.word === inputText)[0];
-                    const verse = item?.word;
-                    const index = item?.index;
-                    if (typeof index !== "undefined") {
-                        appendResults(index);
-                    } else {
-                        // No exact verse found, fall back to semantic search
+                } else {
+                    // Non-visualization query - hide visualization container if it's visible
+                    const vizContainer = document.getElementById("visualization-container");
+                    if (vizContainer.style.display === "block") {
+                        vizContainer.style.display = "none";
+                    }
+                    
+                    if (isVerseReference(inputText)) {
+                        // Traditional verse reference search
+                        lastProcessedQuery = ""; // Reset since this isn't a visualization query
+                        const item = trie
+                            .search(inputText, true)
+                            .filter((item) => item.word === inputText)[0];
+                        const verse = item?.word;
+                        const index = item?.index;
+                        if (typeof index !== "undefined") {
+                            appendResults(index);
+                        } else {
+                            // No exact verse found, fall back to semantic search
+                            performSemanticSearch(inputText);
+                        }
+                    } else if (inputText.length > 0) {
+                        // Semantic search for non-verse text
+                        lastProcessedQuery = ""; // Reset since this isn't a visualization query
                         performSemanticSearch(inputText);
                     }
-                } else if (inputText.length > 0) {
-                    // Semantic search for non-verse text
-                    lastProcessedQuery = ""; // Reset since this isn't a visualization query
-                    performSemanticSearch(inputText);
+                    // Note: If inputText.length === 0, we just hide visualization and clear results (handled by clearResults call)
                 }
             }
 
@@ -1124,6 +1242,7 @@
 
                 if (query) {
                     input.value = query;
+                    hideSuggestionPills(); // Hide pills when loading with a query
                     // Trigger search after data is loaded
                     const checkDataLoaded = setInterval(async () => {
                         // Check if all required functions are loaded
@@ -1616,7 +1735,6 @@
 
                 // Function to handle zoom in
                 function handleZoomIn() {
-                    console.log("Zoom in triggered"); 
                     const containerRect = canvasContainer.getBoundingClientRect();
                     const centerX = containerRect.width / 2;
                     const centerY = containerRect.height / 2;
@@ -1625,7 +1743,6 @@
                 
                 // Function to handle zoom out
                 function handleZoomOut() {
-                    console.log("Zoom out triggered");
                     const containerRect = canvasContainer.getBoundingClientRect();
                     const centerX = containerRect.width / 2;
                     const centerY = containerRect.height / 2;
@@ -1634,7 +1751,6 @@
                 
                 // Function to handle zoom reset
                 function handleZoomReset() {
-                    console.log("Zoom reset triggered");
                     currentZoom = homeZoom;
                     panX = 0;
                     panY = 0;
@@ -1729,40 +1845,66 @@
                                 longPressTriggered = true;
                                 isPanning = false; // Stop panning when showing tooltip
                                 
-                                // Show tooltip at touch position
-                                const rect = canvasContainer.getBoundingClientRect();
-                                const containerX = e.touches[0].clientX - rect.left;
-                                const containerY = e.touches[0].clientY - rect.top;
+                                // Get canvas and container rectangles
+                                const canvasRect = canvas.getBoundingClientRect();
+                                const containerRect = canvasContainer.getBoundingClientRect();
                                 
-                                // Account for zoom and pan
-                                const canvasX = containerX / currentZoom - panX;
-                                const canvasY = containerY / currentZoom - panY;
+                                // First check: is touch within the container viewport?
+                                const isWithinContainer = touchStartX >= containerRect.left && 
+                                                        touchStartX <= containerRect.right && 
+                                                        touchStartY >= containerRect.top && 
+                                                        touchStartY <= containerRect.bottom;
+                                
+                                if (!isWithinContainer) {
+                                    return; // Touch is outside the container viewport
+                                }
+                                
+                                // Second check: is touch within the actual canvas area?
+                                const isWithinCanvas = touchStartX >= canvasRect.left && 
+                                                     touchStartX <= canvasRect.right && 
+                                                     touchStartY >= canvasRect.top && 
+                                                     touchStartY <= canvasRect.bottom;
+                                
+                                if (!isWithinCanvas) {
+                                    return; // Touch is within container but not on canvas
+                                }
+                                
+                                // Calculate position relative to the canvas
+                                const canvasRelativeX = touchStartX - canvasRect.left;
+                                const canvasRelativeY = touchStartY - canvasRect.top;
                                 
                                 // Calculate grid position
-                                const col = Math.floor(canvasX / cellSize);
-                                const row = Math.floor(canvasY / cellSize);
+                                const col = Math.floor(canvasRelativeX / cellSize);
+                                const row = Math.floor(canvasRelativeY / cellSize);
                                 
-                                if (col >= 0 && col < verses.length && row >= 0 && row < verses.length) {
-                                    const verse1 = verses[row];
-                                    const verse2 = verses[col];
+                                // Grid bounds check
+                                if (col < 0 || col >= verses.length || row < 0 || row >= verses.length) {
+                                    return;
+                                }
+                                
+                                // Show tooltip at touch position (relative to container for positioning)
+                                const containerX = touchStartX - containerRect.left;
+                                const containerY = touchStartY - containerRect.top;
+                                
+                                const verse1 = verses[row];
+                                const verse2 = verses[col];
+                                
+                                // Skip dividers
+                                if (!verse1.isDivider && !verse2.isDivider) {
+                                    const similarity = similarities[row][col];
                                     
-                                    // Skip dividers
-                                    if (!verse1.isDivider && !verse2.isDivider) {
-                                        const similarity = similarities[row][col];
-                                        
-                                        tooltip.innerHTML = `
-                                            <div><strong>Row:</strong> ${verse1.ref}</div>
-                                            <div style="margin-bottom: 5px;">${verse1.text.substring(0, 100)}${verse1.text.length > 100 ? "..." : ""}</div>
-                                            <div><strong>Col:</strong> ${verse2.ref}</div>
-                                            <div style="margin-bottom: 5px;">${verse2.text.substring(0, 100)}${verse2.text.length > 100 ? "..." : ""}</div>
-                                            <div><strong>Similarity:</strong> ${similarity.toFixed(4)}</div>
-                                        `;
-                                        
-                                        // Position tooltip relative to container
-                                        tooltip.style.left = containerX + 10 + "px";
-                                        tooltip.style.top = containerY - 10 + "px";
-                                        tooltip.style.display = "block";
-                                    }
+                                    tooltip.innerHTML = `
+                                        <div><strong>Row:</strong> ${verse1.ref}</div>
+                                        <div style="margin-bottom: 5px;">${verse1.text.substring(0, 100)}${verse1.text.length > 100 ? "..." : ""}</div>
+                                        <div><strong>Col:</strong> ${verse2.ref}</div>
+                                        <div style="margin-bottom: 5px;">${verse2.text.substring(0, 100)}${verse2.text.length > 100 ? "..." : ""}</div>
+                                        <div><strong>Similarity:</strong> ${similarity.toFixed(4)}</div>
+                                    `;
+                                    
+                                    // Position tooltip relative to container
+                                    tooltip.style.left = containerX + 10 + "px";
+                                    tooltip.style.top = containerY - 10 + "px";
+                                    tooltip.style.display = "block";
                                 }
                             }, 800); // 800ms long press
                         } else if (e.touches.length === 2) {
@@ -1859,6 +2001,17 @@
                         const containerRect =
                             canvasContainer.getBoundingClientRect();
 
+                        // Check if mouse/touch is within the container bounds first
+                        const isWithinContainer = e.clientX >= containerRect.left && 
+                                                e.clientX <= containerRect.right && 
+                                                e.clientY >= containerRect.top && 
+                                                e.clientY <= containerRect.bottom;
+
+                        if (!isWithinContainer) {
+                            tooltip.style.display = "none";
+                            return;
+                        }
+
                         // Get mouse position relative to container
                         const containerX = e.clientX - containerRect.left;
                         const containerY = e.clientY - containerRect.top;
@@ -1866,9 +2019,9 @@
                         let canvasX, canvasY;
 
                         if (isMobile) {
-                            // On mobile, account for scroll position but no zoom/pan
-                            canvasX = e.clientX - rect.left;
-                            canvasY = e.clientY - rect.top;
+                            // On mobile, disable mousemove tooltips since we handle touch separately
+                            tooltip.style.display = "none";
+                            return;
                         } else {
                             // On desktop, account for zoom and pan
                             canvasX = containerX / currentZoom - panX;

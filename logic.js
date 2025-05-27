@@ -337,7 +337,6 @@ async function loadWasmModule() {
       }
     };
   } catch (error) {
-    console.warn("WASM module failed to load, falling back to JavaScript:", error);
     return { available: false };
   }
 }
@@ -841,7 +840,6 @@ async function computeSimilarityMatrix(verses, progressCallback, taskId, current
         }
       }
     } catch (error) {
-      console.warn("WASM similarity computation failed, falling back to JavaScript:", error);
       // Fall through to JavaScript implementation
     }
   }
