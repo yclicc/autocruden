@@ -211,14 +211,12 @@ async function loadWasm() {
       }
     });
     
-    console.log('✅ WebAssembly module loaded successfully');
     return {
       instance: wasmModule.instance,
       memory: memory,
       available: true
     };
   } catch (error) {
-    console.log('⚠️ WebAssembly not available, falling back to JavaScript:', error.message);
     return { available: false };
   }
 }
@@ -308,13 +306,7 @@ function dotOneToManyWasm(one, matrix) {
 function dotOneToMany(one, matrix) {
   // Use WASM if available for batch processing
   if (wasmModule && wasmModule.available && matrix.length > 100) {
-    console.log(`🚀 Using WASM for batch dot product calculation (${matrix.length} vectors)`);
-    const startTime = performance.now();
-    const result = dotOneToManyWasm(one, matrix);
-    const endTime = performance.now();
-    const dotProductsPerSecond = Math.round((matrix.length / (endTime - startTime)) * 1000);
-    console.log(`⚡ WASM batch dot products: ${matrix.length} calculations in ${Math.round(endTime - startTime)}ms (${dotProductsPerSecond} dot products/sec)`);
-    return result;
+    return dotOneToManyWasm(one, matrix);
   }
   
   // Fallback to JavaScript
@@ -605,11 +597,7 @@ async function computeSimilarityMatrix(verses, progressCallback, taskId, current
   let completed = 0;
   let dotProductCount = 0;
 
-  // Performance tracking
-  const startTime = performance.now();
   const useWasm = wasmModule && wasmModule.available;
-  
-  console.log(`🔧 Computing similarity matrix using ${useWasm ? 'WebAssembly' : 'JavaScript'} (${size}x${size} matrix, ${totalCalculations} calculations)`);
 
   // Initialize matrix
   for (let i = 0; i < size; i++) {
@@ -621,8 +609,6 @@ async function computeSimilarityMatrix(verses, progressCallback, taskId, current
     try {
       const nonDividerVerses = verses.filter(v => !v.isDivider);
       if (nonDividerVerses.length > 5) {
-        console.log(`🚀 Attempting WASM batch calculation for ${nonDividerVerses.length} non-divider verses`);
-        
         // Create a mapping from verse indices to matrix positions
         const verseIndexMap = new Map();
         nonDividerVerses.forEach((verse, idx) => {
@@ -633,13 +619,9 @@ async function computeSimilarityMatrix(verses, progressCallback, taskId, current
         const embeddings = nonDividerVerses.map(verse => biblematrix[verse.index]);
         
         // Use WASM for the heavy computation
-        const wasmStartTime = performance.now();
         const result = await computeSimilarityMatrixWasm(embeddings, progressCallback, taskId, currentVisualizationId);
-        const wasmEndTime = performance.now();
         
         if (result) {
-          console.log(`⚡ WASM computation completed in ${Math.round(wasmEndTime - wasmStartTime)}ms`);
-          
           // Map WASM results back to the full similarity matrix
           for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
@@ -656,23 +638,15 @@ async function computeSimilarityMatrix(verses, progressCallback, taskId, current
             }
           }
           
-          const totalTime = performance.now() - startTime;
-          const totalDotProducts = result.dotProductCount;
-          const dotProductsPerSecond = Math.round((totalDotProducts / totalTime) * 1000);
-          
-          console.log(`✅ WASM Matrix computation: ${totalDotProducts} dot products in ${Math.round(totalTime)}ms (${dotProductsPerSecond} dot products/sec)`);
-          
-          return { similarities, dotProductCount: totalDotProducts };
+          return { similarities, dotProductCount: result.dotProductCount };
         }
       }
     } catch (error) {
-      console.log(`⚠️ WASM computation failed, falling back to JavaScript:`, error);
+      // Fall through to JavaScript implementation
     }
   }
 
   // Fallback to JavaScript implementation
-  console.log(`🔄 Using JavaScript fallback for similarity matrix calculation`);
-  
   for (let i = 0; i < size; i++) {
     for (let j = i; j < size; j++) {
       const verse1 = verses[i];
@@ -709,11 +683,6 @@ async function computeSimilarityMatrix(verses, progressCallback, taskId, current
       }
     }
   }
-
-  const totalTime = performance.now() - startTime;
-  const dotProductsPerSecond = Math.round((dotProductCount / totalTime) * 1000);
-  
-  console.log(`✅ JS Matrix computation: ${dotProductCount} dot products in ${Math.round(totalTime)}ms (${dotProductsPerSecond} dot products/sec)`);
 
   return { similarities, dotProductCount };
 }

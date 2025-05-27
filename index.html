@@ -959,7 +959,6 @@
 
             async function performSemanticSearch(queryText) {
                 if (!window.sentenceTransformerModel) {
-                    console.log("Sentence transformer model not loaded yet");
                     return;
                 }
 
@@ -1099,10 +1098,6 @@
                         // For visualization queries, only need basic data
                         if (isVisualizationQuery(query)) {
                             if (options.length > 0 && bible && biblematrix) {
-                                console.log(
-                                    "URL parameter visualization starting for:",
-                                    query,
-                                );
                                 clearInterval(checkDataLoaded);
                                 await choose();
                             }
@@ -1137,22 +1132,14 @@
             async function createVisualization(query) {
                 // Generate unique ID for this visualization task
                 const taskId = ++currentVisualizationId;
-                console.log(
-                    `Starting visualization task ${taskId} for:`,
-                    query,
-                );
 
                 const parsedQuery = parseVisualizationQuery(query);
                 if (!parsedQuery) {
-                    console.log(`Task ${taskId}: Failed to parse query`);
                     return;
                 }
 
                 // Check if we've been superseded by a newer task
                 if (taskId !== currentVisualizationId) {
-                    console.log(
-                        `Task ${taskId}: Cancelled - newer task ${currentVisualizationId} started`,
-                    );
                     return;
                 }
 
@@ -1167,20 +1154,17 @@
                     verses = result.verses;
                     chapters = result.chapters;
                     if (verses.length === 0) {
-                        console.log(`Task ${taskId}: No verses found`);
                         return;
                     }
                 }
 
                 // Check if biblematrix is available
                 if (!biblematrix) {
-                    console.log(`Task ${taskId}: biblematrix not available`);
                     return;
                 }
 
                 // Check again if we've been superseded
                 if (taskId !== currentVisualizationId) {
-                    console.log(`Task ${taskId}: Cancelled before drawing`);
                     return;
                 }
 
@@ -1191,13 +1175,9 @@
                 );
                 const vizTitle = document.getElementById("viz-title");
 
-                console.log(`Task ${taskId}: Showing visualization container`);
                 vizContainer.style.display = "block";
 
                 if (parsedQuery.type === "comparison") {
-                    console.log(
-                        `Task ${taskId}: Drawing comparison visualization`,
-                    );
                     const sourceText = parsedQuery.source.chapter
                         ? `${parsedQuery.source.book} ${parsedQuery.source.chapter}`
                         : parsedQuery.source.book;
@@ -1211,28 +1191,11 @@
                         taskId,
                     );
                 } else if (parsedQuery.type === "book") {
-                    console.log(`Task ${taskId}: Drawing book visualization`);
                     vizTitle.textContent = `${parsedQuery.book} - Book Similarity Visualization`;
                     await drawBookVisualization(verses, chapters, taskId);
                 } else {
-                    console.log(
-                        `Task ${taskId}: Drawing chapter visualization`,
-                    );
                     vizTitle.textContent = `${parsedQuery.book} ${parsedQuery.chapter} - Chapter Similarity Visualization`;
                     await drawChapterVisualization(verses, taskId);
-                }
-
-                // Final check before showing result
-                if (taskId === currentVisualizationId) {
-                    console.log(
-                        `Task ${taskId}: Visualization complete and current`,
-                    );
-                } else {
-                    console.log(
-                        `Task ${taskId}: Visualization complete but superseded by ${currentVisualizationId}`,
-                    );
-                    // Don't hide container - let the current task control visibility
-                    return;
                 }
             }
 
@@ -1287,39 +1250,22 @@
                 );
 
                 if (!result) {
-                    console.log(`Task ${taskId}: Cancelled during calculation`);
                     progressManager.hide();
                     return;
                 }
 
                 const { similarities, dotProductCount } = result;
 
-                // Performance logging
-                const endTime = performance.now();
-                const totalTime = endTime - startTime;
-                const dotProductsPerSecond = Math.round(
-                    (dotProductCount / totalTime) * 1000,
-                );
-                console.log(
-                    `Chapter visualization: ${dotProductCount} dot products in ${Math.round(totalTime)}ms (${dotProductsPerSecond} dot products/sec)`,
-                );
-
                 progressManager.hide();
 
                 // Final cancellation check before drawing
                 if (taskId !== currentVisualizationId) {
-                    console.log(
-                        `Task ${taskId}: Cancelled before canvas drawing`,
-                    );
                     return;
                 }
 
                 // Draw the heatmap using unified function
                 drawHeatmap(canvas, similarities, verses, cellSize);
 
-                console.log(
-                    `Task ${taskId}: Canvas drawing complete, setting up interaction`,
-                );
                 // Add mouse interaction
                 setupCanvasInteraction(
                     canvas,
@@ -1333,11 +1279,6 @@
             }
 
             async function drawBookVisualization(verses, chapters, taskId) {
-                console.log(
-                    `Task ${taskId}: Starting drawBookVisualization with`,
-                    verses.length,
-                    "verses",
-                );
                 const canvas = document.getElementById("similarity-canvas");
                 const tooltip = document.getElementById("canvas-tooltip");
                 const canvasContainer = canvas.closest(".canvas-container");
@@ -1413,41 +1354,22 @@
                 );
 
                 if (!result) {
-                    console.log(
-                        `Task ${taskId}: Cancelled during book calculation`,
-                    );
                     progressManager.hide();
                     return;
                 }
 
                 const { similarities, dotProductCount } = result;
 
-                // Performance logging
-                const endTime = performance.now();
-                const totalTime = endTime - startTime;
-                const dotProductsPerSecond = Math.round(
-                    (dotProductCount / totalTime) * 1000,
-                );
-                console.log(
-                    `Book visualization: ${dotProductCount} dot products in ${Math.round(totalTime)}ms (${dotProductsPerSecond} dot products/sec)`,
-                );
-
                 progressManager.hide();
 
                 // Final cancellation check before drawing
                 if (taskId !== currentVisualizationId) {
-                    console.log(
-                        `Task ${taskId}: Cancelled before book canvas drawing`,
-                    );
                     return;
                 }
 
                 // Draw the heatmap using unified function
                 drawHeatmap(canvas, similarities, expandedVerses, cellSize);
 
-                console.log(
-                    `Task ${taskId}: Book canvas drawing complete, setting up interaction`,
-                );
                 // Add mouse interaction
                 setupCanvasInteraction(
                     canvas,
@@ -1493,9 +1415,6 @@
                 targetQuery,
                 taskId,
             ) {
-                console.log(
-                    `Task ${taskId}: Starting comparison visualization`,
-                );
                 const canvas = document.getElementById("similarity-canvas");
                 const tooltip = document.getElementById("canvas-tooltip");
                 const canvasContainer = canvas.closest(".canvas-container");
@@ -1521,14 +1440,7 @@
                     targetVerses = addChapterDividers(targetVerses);
                 }
 
-                console.log(
-                    `Task ${taskId}: Source: ${sourceVerses.length} verses, Target: ${targetVerses.length} verses`,
-                );
-
                 if (sourceVerses.length === 0 || targetVerses.length === 0) {
-                    console.log(
-                        `Task ${taskId}: Insufficient verses for comparison`,
-                    );
                     return;
                 }
 
@@ -1583,32 +1495,16 @@
                 );
 
                 if (!result) {
-                    console.log(
-                        `Task ${taskId}: Cancelled during comparison calculation`,
-                    );
                     progressManager.hide();
                     return;
                 }
 
                 const { similarities, dotProductCount } = result;
 
-                // Performance logging
-                const endTime = performance.now();
-                const totalTime = endTime - startTime;
-                const dotProductsPerSecond = Math.round(
-                    (dotProductCount / totalTime) * 1000,
-                );
-                console.log(
-                    `Comparison visualization: ${dotProductCount} dot products in ${Math.round(totalTime)}ms (${dotProductsPerSecond} dot products/sec)`,
-                );
-
                 progressManager.hide();
 
                 // Final cancellation check
                 if (taskId !== currentVisualizationId) {
-                    console.log(
-                        `Task ${taskId}: Cancelled before comparison drawing`,
-                    );
                     return;
                 }
 
@@ -1622,9 +1518,6 @@
                     sourceVerses.length,
                 );
 
-                console.log(
-                    `Task ${taskId}: Comparison drawing complete, setting up interaction`,
-                );
                 // Set up interaction with combined verse data
                 setupCanvasInteraction(
                     canvas,
