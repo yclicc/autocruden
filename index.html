@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>AutoCruden</title>
         <style>
+            /* Global Styles */
             * {
                 margin: 0;
                 padding: 0;
@@ -12,9 +13,7 @@
             }
 
             body {
-                font-family:
-                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                    sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
                 color: #e0e0e0;
                 min-height: 100vh;
@@ -27,6 +26,7 @@
                 padding: 0 20px;
             }
 
+            /* Header Styles */
             .search-header {
                 text-align: center;
                 padding: 60px 0 40px;
@@ -36,13 +36,7 @@
                 font-size: 2.5em;
                 font-weight: 300;
                 margin-bottom: 10px;
-                background: linear-gradient(
-                    45deg,
-                    #4285f4,
-                    #34a853,
-                    #fbbc05,
-                    #ea4335
-                );
+                background: linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
@@ -53,6 +47,7 @@
                 font-size: 1.1em;
             }
 
+            /* Search Input Styles */
             .search-container {
                 position: relative;
                 max-width: 600px;
@@ -86,6 +81,7 @@
                 color: #9aa0a6;
             }
 
+            /* Controls Styles */
             .controls {
                 display: flex;
                 justify-content: center;
@@ -113,17 +109,7 @@
                 cursor: pointer;
             }
 
-            .number-input {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-
-            .number-input label {
-                color: #e0e0e0;
-                font-size: 16px;
-            }
-
+            /* Results Table Styles */
             .results-container {
                 position: relative;
                 margin-top: 40px;
@@ -193,75 +179,37 @@
                 min-width: 100px;
             }
 
-            .loading {
-                text-align: center;
-                padding: 40px;
-                color: #9aa0a6;
-                font-size: 18px;
-            }
-
-            @media (max-width: 768px) {
-                .search-header {
-                    padding: 40px 0 30px;
-                }
-
-                .search-header h1 {
-                    font-size: 2em;
-                }
-
-                .controls {
-                    flex-direction: column;
-                    gap: 20px;
-                    top: 100px; /* Adjusted for mobile */
-                }
-
-                .results-table th {
-                    top: 180px; /* Adjusted for mobile */
-                    padding: 12px 16px;
-                    font-size: 14px;
-                }
-
-                .results-table th,
-                .results-table td {
-                    padding: 12px 16px;
-                    font-size: 14px;
-                }
-
-                /* Mobile table layout - merge location and similarity */
-                .results-table.mobile-layout .similarity-score {
-                    display: none;
-                }
-
-                .results-table.mobile-layout .verse-location {
-                    width: 40%;
-                    font-size: 13px;
-                    line-height: 1.3;
-                }
-
-                .results-table.mobile-layout .verse-text {
-                    width: 60%;
-                }
-
-                .results-table.mobile-layout th:nth-child(3) {
-                    display: none;
-                }
-
-                .results-table.mobile-layout .verse-location small {
-                    color: #34a853;
-                    font-weight: 600;
-                    font-family: "Courier New", monospace;
-                    display: block;
-                    margin-top: 2px;
-                    font-size: 0.85em;
-                }
-            }
-
+            /* Loading Styles */
             .loading-container {
                 margin: 20px 0;
                 padding: 20px;
                 background: #2c2c2c;
                 border-radius: 12px;
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            }
+
+            .loading-container.hidden {
+                display: none;
+            }
+
+            .loading-image {
+                text-align: center;
+                margin-bottom: 25px;
+            }
+
+            .loading-image img {
+                max-width: 150px;
+                max-height: 200px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                margin-bottom: 10px;
+            }
+
+            .image-caption {
+                font-size: 0.85em;
+                color: #ccc;
+                font-style: italic;
+                line-height: 1.3;
             }
 
             .loading-item {
@@ -299,28 +247,53 @@
                 color: #bbb;
             }
 
-            .loading-container.hidden {
-                display: none;
-            }
+            /* Mobile Responsive Styles */
+            @media (max-width: 768px) {
+                .search-header {
+                    padding: 40px 0 30px;
+                }
 
-            .loading-image {
-                text-align: center;
-                margin-bottom: 25px;
-            }
+                .search-header h1 {
+                    font-size: 2em;
+                }
 
-            .loading-image img {
-                max-width: 150px;
-                max-height: 200px;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-                margin-bottom: 10px;
-            }
+                .controls {
+                    flex-direction: column;
+                    gap: 20px;
+                }
 
-            .image-caption {
-                font-size: 0.85em;
-                color: #ccc;
-                font-style: italic;
-                line-height: 1.3;
+                .results-table th,
+                .results-table td {
+                    padding: 12px 16px;
+                    font-size: 14px;
+                }
+
+                .results-table.mobile-layout .similarity-score {
+                    display: none;
+                }
+
+                .results-table.mobile-layout .verse-location {
+                    width: 40%;
+                    font-size: 13px;
+                    line-height: 1.3;
+                }
+
+                .results-table.mobile-layout .verse-text {
+                    width: 60%;
+                }
+
+                .results-table.mobile-layout th:nth-child(3) {
+                    display: none;
+                }
+
+                .results-table.mobile-layout .verse-location small {
+                    color: #34a853;
+                    font-weight: 600;
+                    font-family: "Courier New", monospace;
+                    display: block;
+                    margin-top: 2px;
+                    font-size: 0.85em;
+                }
             }
         </style>
     </head>
@@ -534,68 +507,6 @@
             };
 
             loadAll(false, embeddingsProgressCallback);
-            class TrieNode {
-                constructor() {
-                    this.children = {};
-                    this.isEndOfWord = false;
-                    this.itemIndex = null; // Store the index of the item
-                }
-            }
-
-            class Trie {
-                constructor() {
-                    this.root = new TrieNode();
-                }
-
-                insert(word, index) {
-                    let node = this.root;
-                    for (let i = 0; i < word.length; i++) {
-                        const char = word[i];
-                        if (!node.children[char]) {
-                            node.children[char] = new TrieNode();
-                        }
-                        node = node.children[char];
-                    }
-                    node.isEndOfWord = true;
-                    node.itemIndex = index; // Store the index of the item in the TrieNode
-                }
-
-                search(prefix, index = false) {
-                    let node = this.root;
-                    for (let i = 0; i < prefix.length; i++) {
-                        const char = prefix[i];
-                        if (!node.children[char]) {
-                            return [];
-                        }
-                        node = node.children[char];
-                    }
-                    let out = this._collectWords(node, prefix).sort(
-                        (a, b) => a.index - b.index,
-                    );
-                    if (!index) {
-                        return out.map((a) => a.word);
-                    } else {
-                        return out;
-                    }
-                }
-
-                _collectWords(node, prefix) {
-                    const words = [];
-                    if (node.isEndOfWord) {
-                        words.push({
-                            word: prefix,
-                            index: node.itemIndex, // Retrieve the index of the item from the TrieNode
-                        });
-                    }
-                    for (const char in node.children) {
-                        const childNode = node.children[char];
-                        words.push(
-                            ...this._collectWords(childNode, prefix + char),
-                        );
-                    }
-                    return words;
-                }
-            }
             let options = [];
             const trie = new Trie();
 
@@ -630,65 +541,17 @@
 
             const input = document.getElementById("myInput");
             const results = document.getElementById("results");
+            const topRadio = document.getElementById("top-radio");
+            const bottomRadio = document.getElementById("bottom-radio");
 
             let searchTimeout;
-            let adaptiveDebounce = window.innerWidth <= 768 ? 300 : 10; // 10ms for desktop, 300ms for mobile
-            let performanceHistory = [];
+            const adaptiveDebouncer = createAdaptiveDebouncer();
 
             // Infinite scrolling variables
             let currentResults = [];
             let displayedCount = 0;
             let isLoading = false;
             const BATCH_SIZE = 50; // Load 50 results at a time
-
-            // Function to measure and adapt debounce timing
-            function measurePerformance() {
-                const start = performance.now();
-                return () => {
-                    const duration = performance.now() - start;
-                    performanceHistory.push(duration);
-
-                    // Keep only last 5 measurements
-                    if (performanceHistory.length > 5) {
-                        performanceHistory.shift();
-                    }
-
-                    // Calculate average performance
-                    const avgDuration =
-                        performanceHistory.reduce((a, b) => a + b, 0) /
-                        performanceHistory.length;
-
-                    // Adapt debounce based on performance and device type
-                    const isMobile = window.innerWidth <= 768;
-                    const minDebounce = isMobile ? 100 : 5;
-                    const maxDebounce = isMobile ? 1000 : 500;
-
-                    if (avgDuration < 100) {
-                        // Fast device - shorter debounce
-                        adaptiveDebounce = Math.max(
-                            minDebounce,
-                            adaptiveDebounce * 0.9,
-                        );
-                    } else if (avgDuration > 500) {
-                        // Slow device - longer debounce
-                        adaptiveDebounce = Math.min(
-                            maxDebounce,
-                            adaptiveDebounce * 1.2,
-                        );
-                    } else {
-                        // Medium performance - adjust gradually
-                        const targetDebounce = Math.max(
-                            minDebounce,
-                            Math.min(maxDebounce, avgDuration * 0.8),
-                        );
-                        adaptiveDebounce =
-                            (adaptiveDebounce + targetDebounce) / 2;
-                    }
-
-                    // Round to nearest 5ms for smoother experience
-                    adaptiveDebounce = Math.round(adaptiveDebounce / 5) * 5;
-                };
-            }
 
             async function handleInput(enter = false) {
                 const inputText = input.value;
@@ -709,20 +572,19 @@
                     choose();
                 }
 
-                // Debounced search as user types
+                // Debounced search as user types with adaptive timing
                 clearTimeout(searchTimeout);
                 if (inputText.trim().length > 0) {
                     searchTimeout = setTimeout(() => {
                         const performanceEnd = measurePerformance();
                         choose();
-                        performanceEnd(); // Measure how long choose() took
-                    }, adaptiveDebounce);
+                        const duration = performanceEnd();
+                        adaptiveDebouncer.updateDebounce(duration);
+                    }, adaptiveDebouncer.getDebounceDelay());
                 } else {
                     clearResults(); // Clear results when input is empty
                 }
             }
-
-            // Removed click-to-search since we now search as user types
 
             // Add scroll event listener for infinite scrolling
             window.addEventListener("scroll", () => {
@@ -741,18 +603,14 @@
                 }
             });
 
-            document
-                .getElementById("top-radio")
-                .addEventListener("click", function() {
-                    updateUrlParams();
-                    handleInput();
-                });
-            document
-                .getElementById("bottom-radio")
-                .addEventListener("click", function() {
-                    updateUrlParams();
-                    handleInput();
-                });
+            topRadio.addEventListener("click", function() {
+                updateUrlParams();
+                handleInput();
+            });
+            bottomRadio.addEventListener("click", function() {
+                updateUrlParams();
+                handleInput();
+            });
 
             input.addEventListener("keyup", function (event) {
                 if (event.key === "Enter" || event.keyCode === 13) {
@@ -788,27 +646,12 @@
                 return row;
             }
 
-            function findSim(index) {
-                const sims = dotOneToMany(biblematrix[index], biblematrix);
-                const allindexes = argsort(
-                    sims,
-                    document.querySelector('input[id="bottom-radio"]:checked'),
-                );
-                let indexWithSim = [];
-                allindexes.forEach((index) =>
-                    indexWithSim.push({
-                        index: index,
-                        sim: sims[index],
-                    }),
-                );
-                return indexWithSim;
-            }
 
             function appendResults(index) {
                 clearResults();
 
                 // Prepare all results
-                const otherIndexesAndSims = findSim(index);
+                const otherIndexesAndSims = findSim(index, bottomRadio.checked);
                 currentResults = [{ index: index, similarity: 1.0 }]; // Top verse first
 
                 otherIndexesAndSims.forEach((indexAndSim) => {
@@ -899,18 +742,6 @@
                 }
             }
 
-            function isVerseReference(text) {
-                // Check if the text matches common Bible verse patterns
-                const versePatterns = [
-                    /^\d?\s*[A-Za-z]+\s+\d+:\d+/, // "John 3:16", "1 John 3:16"
-                    /^[A-Za-z]+\s+\d+$/, // "Genesis 1"
-                    /^\d?\s*[A-Za-z]+$/, // "John", "1 John"
-                ];
-
-                return versePatterns.some((pattern) =>
-                    pattern.test(text.trim()),
-                );
-            }
 
             async function performSemanticSearch(queryText) {
                 if (!window.sentenceTransformerModel) {
@@ -933,10 +764,7 @@
                     const similarities = dotOneToMany(queryVector, biblematrix);
 
                     // Get all results sorted by similarity
-                    const isBottom = document.querySelector(
-                        'input[id="bottom-radio"]:checked',
-                    );
-                    const allIndices = argsort(similarities, isBottom);
+                    const allIndices = argsort(similarities, bottomRadio.checked);
 
                     // Prepare all results for infinite scrolling
                     clearResults();
@@ -976,7 +804,7 @@
 
             function updateUrlParams() {
                 const inputText = input.value.trim();
-                const isBottomSelected = document.getElementById("bottom-radio").checked;
+                const isBottomSelected = bottomRadio.checked;
                 
                 if (inputText) {
                     const url = new URL(window.location);
@@ -1039,11 +867,11 @@
                 
                 // Set radio button based on reverse parameter
                 if (reverse) {
-                    document.getElementById("bottom-radio").checked = true;
-                    document.getElementById("top-radio").checked = false;
+                    bottomRadio.checked = true;
+                    topRadio.checked = false;
                 } else {
-                    document.getElementById("top-radio").checked = true;
-                    document.getElementById("bottom-radio").checked = false;
+                    topRadio.checked = true;
+                    bottomRadio.checked = false;
                 }
             }
 

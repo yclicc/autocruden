@@ -1,6 +1,5 @@
 var bible = false,
-  biblematrix = false,
-  biblematrixpca = false;
+  biblematrix = false;
 
 function innerProduct(vector1, vector2) {
   let result = 0;
@@ -180,30 +179,9 @@ function loadAll(spoofMatrix = false, progressCallback = null) {
   if (spoofMatrix) {
     biblematrix = [[1, 2, 3]];
   } else {
-    // This is old and slow
-    // loadTable("webembed.csv", ",", true)
-    //   .then(matrix => {webmatrix = matrix.slice(1);});
-
-    // This is smart and fast
-    // let xhr = new XMLHttpRequest();
-    // xhr.open('get', './webembed.binary', true);
-    // xhr.responseType = 'arraybuffer';
-    // xhr.onload = (event) => {
-    // 	const arrayBuffer = xhr.response;
-    // 	if (arrayBuffer) {
-    // 		const rawArray = new Float32Array(arrayBuffer)
-    // 		webmatrix = []
-    // 		const dimensions = 768;
-    // 		for (let i = 0; i < rawArray.length; i+= dimensions) {
-    // 			webmatrix.push(rawArray.slice(i, i + dimensions))
-    // 		}
-    // 	}
-    // }
-    // xhr.send();
     loadBinary("./bsbembedfast16.binary", 384, progressCallback).then((matrix) => {
       biblematrix = matrix;
     });
-    // loadBinary("./webembedpca50.binary", 50).then(matrix => {webmatrixpca = matrix})
   }
 }
 
@@ -230,4 +208,149 @@ function argsort(array, ascending = false) {
   }
 
   return indices;
+}
+
+// Trie data structure for fast prefix matching
+class TrieNode {
+  constructor() {
+    this.children = {};
+    this.isEndOfWord = false;
+    this.itemIndex = null; // Store the index of the item
+  }
+}
+
+class Trie {
+  constructor() {
+    this.root = new TrieNode();
+  }
+
+  insert(word, index) {
+    let node = this.root;
+    for (let i = 0; i < word.length; i++) {
+      const char = word[i];
+      if (!node.children[char]) {
+        node.children[char] = new TrieNode();
+      }
+      node = node.children[char];
+    }
+    node.isEndOfWord = true;
+    node.itemIndex = index; // Store the index of the item in the TrieNode
+  }
+
+  search(prefix, index = false) {
+    let node = this.root;
+    for (let i = 0; i < prefix.length; i++) {
+      const char = prefix[i];
+      if (!node.children[char]) {
+        return [];
+      }
+      node = node.children[char];
+    }
+    let out = this._collectWords(node, prefix).sort(
+      (a, b) => a.index - b.index,
+    );
+    if (!index) {
+      return out.map((a) => a.word);
+    } else {
+      return out;
+    }
+  }
+
+  _collectWords(node, prefix) {
+    const words = [];
+    if (node.isEndOfWord) {
+      words.push({
+        word: prefix,
+        index: node.itemIndex, // Retrieve the index of the item from the TrieNode
+      });
+    }
+    for (const char in node.children) {
+      const childNode = node.children[char];
+      words.push(
+        ...this._collectWords(childNode, prefix + char),
+      );
+    }
+    return words;
+  }
+}
+
+// Search and similarity functions
+function isVerseReference(text) {
+  // Check if the text matches common Bible verse patterns
+  const versePatterns = [
+    /^\d?\s*[A-Za-z]+\s+\d+:\d+/, // "John 3:16", "1 John 3:16"
+    /^[A-Za-z]+\s+\d+$/, // "Genesis 1"
+    /^\d?\s*[A-Za-z]+$/, // "John", "1 John"
+  ];
+
+  return versePatterns.some((pattern) =>
+    pattern.test(text.trim()),
+  );
+}
+
+function findSim(index, ascending = false) {
+  const sims = dotOneToMany(biblematrix[index], biblematrix);
+  const allindexes = argsort(sims, ascending);
+  let indexWithSim = [];
+  allindexes.forEach((index) =>
+    indexWithSim.push({
+      index: index,
+      sim: sims[index],
+    }),
+  );
+  return indexWithSim;
+}
+
+// Performance measurement for adaptive debouncing
+function measurePerformance() {
+  const start = performance.now();
+  return () => {
+    const duration = performance.now() - start;
+    return duration;
+  };
+}
+
+// Adaptive debouncing system
+function createAdaptiveDebouncer() {
+  let performanceHistory = [];
+  let adaptiveDebounce = window.innerWidth <= 768 ? 300 : 10; // 10ms for desktop, 300ms for mobile
+  const isMobile = window.innerWidth <= 768;
+  const minDebounce = isMobile ? 100 : 5;
+  const maxDebounce = isMobile ? 1000 : 500;
+  
+  function updateDebounce(duration) {
+    performanceHistory.push(duration);
+
+    // Keep only last 5 measurements (same as git version)
+    if (performanceHistory.length > 5) {
+      performanceHistory.shift();
+    }
+
+    // Calculate on every measurement (same as git version)
+
+    // Calculate average performance
+    const avgDuration = performanceHistory.reduce((a, b) => a + b, 0) / performanceHistory.length;
+
+    // Adapt debounce based on performance
+    if (avgDuration < 100) {
+      // Fast device - shorter debounce
+      adaptiveDebounce = Math.max(minDebounce, adaptiveDebounce * 0.9);
+    } else if (avgDuration > 500) {
+      // Slow device - longer debounce
+      adaptiveDebounce = Math.min(maxDebounce, adaptiveDebounce * 1.2);
+    } else {
+      // Medium performance - adjust gradually
+      const targetDebounce = Math.max(minDebounce, Math.min(maxDebounce, avgDuration * 0.8));
+      adaptiveDebounce = (adaptiveDebounce + targetDebounce) / 2;
+    }
+
+    // Round to nearest 5ms for smoother experience
+    adaptiveDebounce = Math.round(adaptiveDebounce / 5) * 5;
+  }
+  
+  function getDebounceDelay() {
+    return adaptiveDebounce;
+  }
+  
+  return { updateDebounce, getDebounceDelay };
 }
