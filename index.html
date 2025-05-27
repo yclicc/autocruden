@@ -852,9 +852,9 @@
                     if (window.checkAndHideLoading) {
                         window.checkAndHideLoading();
                     }
-                    // Show suggestion pills if no query in input
+                    // Show suggestion pills and attribution if no query in input
                     if (input.value.trim().length === 0) {
-                        showSuggestionPills();
+                        clearResults(); // This will show both attribution and suggestion pills
                     }
                 }, 500);
             }
@@ -905,7 +905,7 @@
 
                 // Show/hide suggestion pills based on input
                 if (inputText.trim().length === 0) {
-                    showSuggestionPills();
+                    // Don't show pills here - let clearResults() handle it after adding credits
                 } else {
                     hideSuggestionPills();
                 }
@@ -1048,14 +1048,36 @@
                 displayedCount = 0;
                 isLoading = false;
                 
-                // Show suggestion pills if input is empty
+                // Show suggestion pills and credits if input is empty
                 if (input.value.trim().length === 0) {
-                    showSuggestionPills();
                     // Also hide visualization container when input is completely cleared
                     const vizContainer = document.getElementById("visualization-container");
                     if (vizContainer.style.display === "block") {
                         vizContainer.style.display = "none";
                     }
+                    
+                    // Add credits when no query is active
+                    results.innerHTML = `
+                        <div style="margin-top: 60px; padding: 40px 20px;">
+                            <p style="color:#9aa0a6; text-align: center; margin-bottom: 30px; font-size: 14px; line-height: 1.6;">
+                                The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with 
+                                <a href="https://biblehub.com" style="color: #4285f4;">Bible Hub</a>, 
+                                <a href="https://discoverybible.com" style="color: #4285f4;">Discovery Bible</a>, 
+                                <a href="https://openbible.com" style="color: #4285f4;">OpenBible.com</a>, 
+                                and the Berean Bible Translation Committee. This text of God's Word has been 
+                                <a href="https://creativecommons.org/publicdomain/zero/1.0/" style="color: #4285f4;">dedicated to the public domain</a>.
+                            </p>
+                            <p style="color:#9aa0a6; text-align: center; font-size: 14px; line-height: 1.6;">
+                                AI semantic search powered by 
+                                <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2" style="color: #4285f4;">all-MiniLM-L6-v2</a> 
+                                (Apache License) via 
+                                <a href="https://huggingface.co/Xenova/all-MiniLM-L6-v2" style="color: #4285f4;">Transformers.js</a>.
+                            </p>
+                        </div>
+                    `;
+                    
+                    // Show suggestion pills after adding credits
+                    showSuggestionPills();
                 }
             }
 

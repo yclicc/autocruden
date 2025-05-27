@@ -1,11 +1,14 @@
 # AutoCruden
-To view the results (visual display currently offline, so see examples below): [Bible Map Browser (currently offline)] [[Verse Explorer](https://yclicc.github.io/autocruden/)]
+To view the results: [AutoCruden](https://autocruden.com)
 
 ## TL;DR
 A machine learning model tells you which verses of the Bible are most and least similar to each other.
 
 ## Limitations
 The model (see [making of](#making-of)) has been trained (by far cleverer people than me) on lots of similar and dissimilar sentences. It may not be suited to use with the Bible, and a different model might well give completely different results: The results are therefore neither definitive nor scientific!
+
+# TODO Update Everything Below Here, as we now use Berean Standard Bible rather than World English Bible
+Claude 4 was also used to rewrite the code and add lots of new features.
 
 ## Bible Map Browser
 ### Controls
