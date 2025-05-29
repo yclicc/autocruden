@@ -2082,19 +2082,19 @@
                                         return; // Touch is within container but not on canvas
                                     }
 
-                                    // Calculate position relative to the canvas
-                                    const canvasRelativeX =
-                                        touchStartX - canvasRect.left;
-                                    const canvasRelativeY =
-                                        touchStartY - canvasRect.top;
+                                    // Calculate position relative to the container
+                                    const containerX =
+                                        touchStartX - containerRect.left;
+                                    const containerY =
+                                        touchStartY - containerRect.top;
+
+                                    // Account for zoom and pan (like desktop mousemove)
+                                    const canvasX = containerX / currentZoom - panX;
+                                    const canvasY = containerY / currentZoom - panY;
 
                                     // Calculate grid position
-                                    const col = Math.floor(
-                                        canvasRelativeX / cellSize,
-                                    );
-                                    const row = Math.floor(
-                                        canvasRelativeY / cellSize,
-                                    );
+                                    const col = Math.floor(canvasX / cellSize);
+                                    const row = Math.floor(canvasY / cellSize);
 
                                     // Grid bounds check
                                     if (
@@ -2107,10 +2107,7 @@
                                     }
 
                                     // Show tooltip at touch position (relative to container for positioning)
-                                    const containerX =
-                                        touchStartX - containerRect.left;
-                                    const containerY =
-                                        touchStartY - containerRect.top;
+                                    // containerX and containerY already calculated above
 
                                     const verse1 = verses[row];
                                     const verse2 = verses[col];
