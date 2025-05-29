@@ -4,6 +4,87 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>AutoCruden</title>
+
+        <!-- PWA Meta Tags -->
+        <meta
+            name="description"
+            content="A modern Biblical concordance tool that combines traditional verse reference search with AI-powered semantic search capabilities"
+        />
+        <meta name="theme-color" content="#4285f4" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta
+            name="mobile-web-app-status-bar-style"
+            content="black-translucent"
+        />
+        <meta name="mobile-web-app-title" content="AutoCruden" />
+        <meta name="msapplication-TileColor" content="#1a1a1a" />
+        <meta
+            name="msapplication-TileImage"
+            content="/icons/icon-144x144.png"
+        />
+
+        <!-- PWA Manifest -->
+        <link rel="manifest" href="/manifest.json" />
+
+        <!-- Favicon and App Icons -->
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="16x16"
+            href="/icons/icon-16x16.png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="32x32"
+            href="/icons/icon-32x32.png"
+        />
+        <link
+            rel="apple-touch-icon"
+            sizes="180x180"
+            href="/icons/icon-192x192.png"
+        />
+        <link
+            rel="apple-touch-icon"
+            sizes="152x152"
+            href="/icons/icon-152x152.png"
+        />
+        <link
+            rel="apple-touch-icon"
+            sizes="144x144"
+            href="/icons/icon-144x144.png"
+        />
+        <link
+            rel="apple-touch-icon"
+            sizes="120x120"
+            href="/icons/icon-128x128.png"
+        />
+        <link
+            rel="apple-touch-icon"
+            sizes="114x114"
+            href="/icons/icon-128x128.png"
+        />
+        <link
+            rel="apple-touch-icon"
+            sizes="76x76"
+            href="/icons/icon-72x72.png"
+        />
+        <link
+            rel="apple-touch-icon"
+            sizes="72x72"
+            href="/icons/icon-72x72.png"
+        />
+        <link
+            rel="apple-touch-icon"
+            sizes="60x60"
+            href="/icons/icon-48x48.png"
+        />
+        <link
+            rel="apple-touch-icon"
+            sizes="57x57"
+            href="/icons/icon-48x48.png"
+        />
         <style>
             /* Global Styles */
             * {
@@ -329,7 +410,7 @@
                 margin: 0;
                 font-size: 1.2em;
             }
-            
+
             .header-controls {
                 display: flex;
                 align-items: center;
@@ -371,7 +452,6 @@
                 .canvas-wrapper {
                     touch-action: none;
                 }
-
             }
 
             .canvas-wrapper {
@@ -410,22 +490,24 @@
                 -webkit-user-select: none;
                 -webkit-tap-highlight-color: transparent;
                 outline: none;
-                transition: background-color 0.1s ease, transform 0.1s ease;
+                transition:
+                    background-color 0.1s ease,
+                    transform 0.1s ease;
             }
 
             .zoom-btn:hover {
                 background: rgba(66, 133, 244, 0.7);
             }
-            
+
             .zoom-btn:active {
                 background: rgba(66, 133, 244, 0.9);
                 transform: scale(0.95);
             }
-            
+
             .zoom-btn:focus {
                 outline: none;
             }
-            
+
             @media (max-width: 768px) {
                 .zoom-btn {
                     width: 40px;
@@ -604,10 +686,18 @@
             </div>
 
             <div id="suggestion-pills" class="suggestion-pills">
-                <div class="suggestion-pill" data-query="John 3:16">John 3:16</div>
-                <div class="suggestion-pill" data-query="God so loved">God so loved</div>
-                <div class="suggestion-pill" data-query="Philippians 2 *">Analyse Philippians 2</div>
-                <div class="suggestion-pill" data-query="Ezra * Nehemiah *">Compare Ezra and Nehemiah</div>
+                <div class="suggestion-pill" data-query="John 3:16">
+                    John 3:16
+                </div>
+                <div class="suggestion-pill" data-query="God so loved">
+                    God so loved
+                </div>
+                <div class="suggestion-pill" data-query="Philippians 2 *">
+                    Analyse Philippians 2
+                </div>
+                <div class="suggestion-pill" data-query="Ezra * Nehemiah *">
+                    Compare Ezra and Nehemiah
+                </div>
             </div>
 
             <div class="controls">
@@ -683,6 +773,36 @@
         </div>
         <script src="logic.js"></script>
         <script type="module">
+            // PWA Install Functionality
+            let deferredPrompt;
+
+            // Listen for beforeinstallprompt event
+            window.addEventListener("beforeinstallprompt", (e) => {
+                // Prevent the default mini-infobar or install dialog from appearing on mobile
+                e.preventDefault();
+                // Save the event because we'll need to trigger it later
+                deferredPrompt = e;
+            });
+
+            // Handle app installation
+            async function installApp() {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    // Find out whether the user confirmed the installation or not
+                    const { outcome } = await deferredPrompt.userChoice;
+                    // The deferredPrompt can only be used once
+                    deferredPrompt = null;
+                    // Hide the install button
+                    const installBtn = document.getElementById("pwa-install-btn");
+                    if (installBtn) {
+                        installBtn.style.display = "none";
+                    }
+                }
+            }
+
+            // Make installApp available globally
+            window.installApp = installApp;
+
             import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers";
 
             let sentenceTransformerModel = null;
@@ -771,12 +891,17 @@
 
             // Centralized function to check if loading should be hidden
             function checkAndHideLoading() {
-                const loadingContainer = document.getElementById("loading-container");
-                if (loadingContainer && !loadingContainer.classList.contains("hidden")) {
+                const loadingContainer =
+                    document.getElementById("loading-container");
+                if (
+                    loadingContainer &&
+                    !loadingContainer.classList.contains("hidden")
+                ) {
                     // Check if core data is loaded (different requirements for different features)
-                    const coreDataLoaded = bible && biblematrix && options.length > 0;
+                    const coreDataLoaded =
+                        bible && biblematrix && options.length > 0;
                     const modelLoaded = window.sentenceTransformerModel;
-                    
+
                     // Hide if core data is ready (visualizations don't need the AI model)
                     if (coreDataLoaded) {
                         loadingContainer.classList.add("hidden");
@@ -876,10 +1001,11 @@
 
             // Set up suggestion pill click handlers
             function setupSuggestionPills() {
-                const pills = suggestionPills.querySelectorAll('.suggestion-pill');
-                pills.forEach(pill => {
-                    pill.addEventListener('click', () => {
-                        const query = pill.getAttribute('data-query');
+                const pills =
+                    suggestionPills.querySelectorAll(".suggestion-pill");
+                pills.forEach((pill) => {
+                    pill.addEventListener("click", () => {
+                        const query = pill.getAttribute("data-query");
                         input.value = query;
                         updateUrlParams();
                         handleInput(true); // Trigger search immediately
@@ -890,11 +1016,11 @@
 
             // Show/hide suggestion pills
             function showSuggestionPills() {
-                suggestionPills.classList.remove('hidden');
+                suggestionPills.classList.remove("hidden");
             }
 
             function hideSuggestionPills() {
-                suggestionPills.classList.add('hidden');
+                suggestionPills.classList.add("hidden");
             }
 
             // Initialize suggestion pills
@@ -1047,39 +1173,88 @@
                 currentResults = [];
                 displayedCount = 0;
                 isLoading = false;
-                
+
                 // Show suggestion pills and credits if input is empty
                 if (input.value.trim().length === 0) {
                     // Also hide visualization container when input is completely cleared
-                    const vizContainer = document.getElementById("visualization-container");
+                    const vizContainer = document.getElementById(
+                        "visualization-container",
+                    );
                     if (vizContainer.style.display === "block") {
                         vizContainer.style.display = "none";
                     }
-                    
+
                     // Add credits when no query is active
                     results.innerHTML = `
                         <div style="margin-top: 60px; padding: 40px 20px;">
                             <p style="color:#9aa0a6; text-align: center; margin-bottom: 30px; font-size: 14px; line-height: 1.6;">
-                                The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with 
-                                <a href="https://biblehub.com" style="color: #4285f4;">Bible Hub</a>, 
-                                <a href="https://discoverybible.com" style="color: #4285f4;">Discovery Bible</a>, 
-                                <a href="https://openbible.com" style="color: #4285f4;">OpenBible.com</a>, 
-                                and the Berean Bible Translation Committee. This text of God's Word has been 
+                                The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with
+                                <a href="https://biblehub.com" style="color: #4285f4;">Bible Hub</a>,
+                                <a href="https://discoverybible.com" style="color: #4285f4;">Discovery Bible</a>,
+                                <a href="https://openbible.com" style="color: #4285f4;">OpenBible.com</a>,
+                                and the Berean Bible Translation Committee. This text of God's Word has been
                                 <a href="https://creativecommons.org/publicdomain/zero/1.0/" style="color: #4285f4;">dedicated to the public domain</a>.
                             </p>
                             <p style="color:#9aa0a6; text-align: center; margin-bottom: 30px; font-size: 14px; line-height: 1.6;">
-                                AI semantic search powered by 
-                                <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2" style="color: #4285f4;">all-MiniLM-L6-v2</a> 
-                                (Apache License) via 
+                                AI semantic search powered by
+                                <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2" style="color: #4285f4;">all-MiniLM-L6-v2</a>
+                                (Apache License) via
                                 <a href="https://huggingface.co/Xenova/all-MiniLM-L6-v2" style="color: #4285f4;">Transformers.js</a>.
                             </p>
                             <p style="color:#9aa0a6; text-align: center; font-size: 14px; line-height: 1.6;">
                             Source code may be found at <a href="https://github.com/yclicc/autocruden">github.com/yclicc/autocruden</a>
                             and is MIT licensed.
                             </p>
+                            <div id="pwa-install-section" style="text-align: center; margin-top: 30px;">
+                                <p style="color: #9aa0a6; font-size: 14px; line-height: 1.6; margin-bottom: 15px;">
+                                    💡 This app can be installed for offline use and faster access.
+                                </p>
+                                <button id="pwa-install-btn" style="background: rgba(66, 133, 244, 0.1); border: 1px solid rgba(66, 133, 244, 0.3); color: #4285f4; padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: inline-block;">
+                                    📱 Install App
+                                </button>
+                            </div>
                         </div>
                     `;
-                    
+
+                    // Check if app is already running as PWA (includes iOS Safari)
+                    function isRunningAsPWA() {
+                        return (
+                            window.matchMedia("(display-mode: standalone)")
+                                .matches ||
+                            window.navigator.standalone === true ||
+                            document.referrer.includes("android-app://")
+                        );
+                    }
+
+                    // Setup install functionality
+                    const installSection = document.getElementById(
+                        "pwa-install-section",
+                    );
+                    const installBtn =
+                        document.getElementById("pwa-install-btn");
+
+                    // Hide install section if already running as PWA
+                    if (isRunningAsPWA() && installSection) {
+                        installSection.style.display = "none";
+                    } else if (installSection) {
+                        // Setup install button click handler if button exists
+                        if (installBtn) {
+                            installBtn.addEventListener("click", installApp);
+                        }
+                    }
+
+
+                    // Listen for app install event
+                    window.addEventListener("appinstalled", () => {
+                        // Hide install section when app is installed
+                        const installSection = document.getElementById(
+                            "pwa-install-section",
+                        );
+                        if (installSection) {
+                            installSection.style.display = "none";
+                        }
+                    });
+
                     // Show suggestion pills after adding credits
                     showSuggestionPills();
                 }
@@ -1187,8 +1362,7 @@
 
                     // Load first batch of results
                     loadMoreResults();
-                } catch (error) {
-                }
+                } catch (error) {}
             }
 
             function updateUrlParams() {
@@ -1232,11 +1406,13 @@
                     await createVisualization(inputText);
                 } else {
                     // Non-visualization query - hide visualization container if it's visible
-                    const vizContainer = document.getElementById("visualization-container");
+                    const vizContainer = document.getElementById(
+                        "visualization-container",
+                    );
                     if (vizContainer.style.display === "block") {
                         vizContainer.style.display = "none";
                     }
-                    
+
                     if (isVerseReference(inputText)) {
                         // Traditional verse reference search
                         lastProcessedQuery = ""; // Reset since this isn't a visualization query
@@ -1743,17 +1919,17 @@
 
                 // Apply initial zoom immediately
                 updateTransform();
-                
+
                 // Zoom control buttons (work on both mobile and desktop)
                 const zoomInBtn = document.getElementById("zoom-in");
                 const zoomOutBtn = document.getElementById("zoom-out");
                 const zoomResetBtn = document.getElementById("zoom-reset");
-                
+
                 // Remove any existing listeners to avoid duplicates
                 zoomInBtn.replaceWith(zoomInBtn.cloneNode(true));
-                zoomOutBtn.replaceWith(zoomOutBtn.cloneNode(true)); 
+                zoomOutBtn.replaceWith(zoomOutBtn.cloneNode(true));
                 zoomResetBtn.replaceWith(zoomResetBtn.cloneNode(true));
-                
+
                 // Re-get references after cloning
                 const newZoomInBtn = document.getElementById("zoom-in");
                 const newZoomOutBtn = document.getElementById("zoom-out");
@@ -1761,20 +1937,22 @@
 
                 // Function to handle zoom in
                 function handleZoomIn() {
-                    const containerRect = canvasContainer.getBoundingClientRect();
+                    const containerRect =
+                        canvasContainer.getBoundingClientRect();
                     const centerX = containerRect.width / 2;
                     const centerY = containerRect.height / 2;
                     zoomAtPoint(centerX, centerY, 1.5);
                 }
-                
+
                 // Function to handle zoom out
                 function handleZoomOut() {
-                    const containerRect = canvasContainer.getBoundingClientRect();
+                    const containerRect =
+                        canvasContainer.getBoundingClientRect();
                     const centerX = containerRect.width / 2;
                     const centerY = containerRect.height / 2;
                     zoomAtPoint(centerX, centerY, 1 / 1.5);
                 }
-                
+
                 // Function to handle zoom reset
                 function handleZoomReset() {
                     currentZoom = homeZoom;
@@ -1806,7 +1984,6 @@
                     updateTransform();
                 }
 
-
                 // Touch variables for mobile pinch zoom
                 let initialDistance = 0;
                 let initialTouchZoom = 1;
@@ -1832,12 +2009,12 @@
                     });
                 } else {
                     // Mobile touch events for pinch zoom and panning
-                    let touchStartX = 0, touchStartY = 0;
+                    let touchStartX = 0,
+                        touchStartY = 0;
                     let isPanning = false;
                     let longPressTimer = null;
                     let longPressTriggered = false;
-                    
-                    
+
                     function getTouchDistance(touches) {
                         if (touches.length < 2) return 0;
                         const dx = touches[0].clientX - touches[1].clientX;
@@ -1849,145 +2026,207 @@
                         if (touches.length < 2) return { x: 0, y: 0 };
                         const rect = canvasContainer.getBoundingClientRect();
                         return {
-                            x: (touches[0].clientX + touches[1].clientX) / 2 - rect.left,
-                            y: (touches[0].clientY + touches[1].clientY) / 2 - rect.top
+                            x:
+                                (touches[0].clientX + touches[1].clientX) / 2 -
+                                rect.left,
+                            y:
+                                (touches[0].clientY + touches[1].clientY) / 2 -
+                                rect.top,
                         };
                     }
 
-                    canvasContainer.addEventListener("touchstart", (e) => {
-                        if (e.touches.length === 1) {
-                            // Single finger - start panning and set up long press
-                            e.preventDefault();
-                            isPanning = true;
-                            longPressTriggered = false;
-                            touchStartX = e.touches[0].clientX;
-                            touchStartY = e.touches[0].clientY;
-                            
-                            // Hide any existing tooltip before starting new one
-                            tooltip.style.display = "none";
-                            
-                            // Set up long press timer for tooltip
-                            longPressTimer = setTimeout(() => {
-                                longPressTriggered = true;
-                                isPanning = false; // Stop panning when showing tooltip
-                                
-                                // Get canvas and container rectangles
-                                const canvasRect = canvas.getBoundingClientRect();
-                                const containerRect = canvasContainer.getBoundingClientRect();
-                                
-                                // First check: is touch within the container viewport?
-                                const isWithinContainer = touchStartX >= containerRect.left && 
-                                                        touchStartX <= containerRect.right && 
-                                                        touchStartY >= containerRect.top && 
-                                                        touchStartY <= containerRect.bottom;
-                                
-                                if (!isWithinContainer) {
-                                    return; // Touch is outside the container viewport
-                                }
-                                
-                                // Second check: is touch within the actual canvas area?
-                                const isWithinCanvas = touchStartX >= canvasRect.left && 
-                                                     touchStartX <= canvasRect.right && 
-                                                     touchStartY >= canvasRect.top && 
-                                                     touchStartY <= canvasRect.bottom;
-                                
-                                if (!isWithinCanvas) {
-                                    return; // Touch is within container but not on canvas
-                                }
-                                
-                                // Calculate position relative to the canvas
-                                const canvasRelativeX = touchStartX - canvasRect.left;
-                                const canvasRelativeY = touchStartY - canvasRect.top;
-                                
-                                // Calculate grid position
-                                const col = Math.floor(canvasRelativeX / cellSize);
-                                const row = Math.floor(canvasRelativeY / cellSize);
-                                
-                                // Grid bounds check
-                                if (col < 0 || col >= verses.length || row < 0 || row >= verses.length) {
-                                    return;
-                                }
-                                
-                                // Show tooltip at touch position (relative to container for positioning)
-                                const containerX = touchStartX - containerRect.left;
-                                const containerY = touchStartY - containerRect.top;
-                                
-                                const verse1 = verses[row];
-                                const verse2 = verses[col];
-                                
-                                // Skip dividers
-                                if (!verse1.isDivider && !verse2.isDivider) {
-                                    const similarity = similarities[row][col];
-                                    
-                                    tooltip.innerHTML = `
+                    canvasContainer.addEventListener(
+                        "touchstart",
+                        (e) => {
+                            if (e.touches.length === 1) {
+                                // Single finger - start panning and set up long press
+                                e.preventDefault();
+                                isPanning = true;
+                                longPressTriggered = false;
+                                touchStartX = e.touches[0].clientX;
+                                touchStartY = e.touches[0].clientY;
+
+                                // Hide any existing tooltip before starting new one
+                                tooltip.style.display = "none";
+
+                                // Set up long press timer for tooltip
+                                longPressTimer = setTimeout(() => {
+                                    longPressTriggered = true;
+                                    isPanning = false; // Stop panning when showing tooltip
+
+                                    // Get canvas and container rectangles
+                                    const canvasRect =
+                                        canvas.getBoundingClientRect();
+                                    const containerRect =
+                                        canvasContainer.getBoundingClientRect();
+
+                                    // First check: is touch within the container viewport?
+                                    const isWithinContainer =
+                                        touchStartX >= containerRect.left &&
+                                        touchStartX <= containerRect.right &&
+                                        touchStartY >= containerRect.top &&
+                                        touchStartY <= containerRect.bottom;
+
+                                    if (!isWithinContainer) {
+                                        return; // Touch is outside the container viewport
+                                    }
+
+                                    // Second check: is touch within the actual canvas area?
+                                    const isWithinCanvas =
+                                        touchStartX >= canvasRect.left &&
+                                        touchStartX <= canvasRect.right &&
+                                        touchStartY >= canvasRect.top &&
+                                        touchStartY <= canvasRect.bottom;
+
+                                    if (!isWithinCanvas) {
+                                        return; // Touch is within container but not on canvas
+                                    }
+
+                                    // Calculate position relative to the canvas
+                                    const canvasRelativeX =
+                                        touchStartX - canvasRect.left;
+                                    const canvasRelativeY =
+                                        touchStartY - canvasRect.top;
+
+                                    // Calculate grid position
+                                    const col = Math.floor(
+                                        canvasRelativeX / cellSize,
+                                    );
+                                    const row = Math.floor(
+                                        canvasRelativeY / cellSize,
+                                    );
+
+                                    // Grid bounds check
+                                    if (
+                                        col < 0 ||
+                                        col >= verses.length ||
+                                        row < 0 ||
+                                        row >= verses.length
+                                    ) {
+                                        return;
+                                    }
+
+                                    // Show tooltip at touch position (relative to container for positioning)
+                                    const containerX =
+                                        touchStartX - containerRect.left;
+                                    const containerY =
+                                        touchStartY - containerRect.top;
+
+                                    const verse1 = verses[row];
+                                    const verse2 = verses[col];
+
+                                    // Skip dividers
+                                    if (
+                                        !verse1.isDivider &&
+                                        !verse2.isDivider
+                                    ) {
+                                        const similarity =
+                                            similarities[row][col];
+
+                                        tooltip.innerHTML = `
                                         <div><strong>Row:</strong> ${verse1.ref}</div>
                                         <div style="margin-bottom: 5px;">${verse1.text.substring(0, 100)}${verse1.text.length > 100 ? "..." : ""}</div>
                                         <div><strong>Col:</strong> ${verse2.ref}</div>
                                         <div style="margin-bottom: 5px;">${verse2.text.substring(0, 100)}${verse2.text.length > 100 ? "..." : ""}</div>
                                         <div><strong>Similarity:</strong> ${similarity.toFixed(4)}</div>
                                     `;
-                                    
-                                    // Position tooltip relative to container
-                                    tooltip.style.left = containerX + 10 + "px";
-                                    tooltip.style.top = containerY - 10 + "px";
-                                    tooltip.style.display = "block";
-                                }
-                            }, 800); // 800ms long press
-                        } else if (e.touches.length === 2) {
-                            // Two fingers - start zooming
-                            e.preventDefault();
-                            isPanning = false;
-                            clearTimeout(longPressTimer);
-                            tooltip.style.display = "none";
-                            touches = Array.from(e.touches);
-                            initialDistance = getTouchDistance(touches);
-                            initialTouchZoom = currentZoom;
-                        }
-                    }, { passive: false });
 
-                    canvasContainer.addEventListener("touchmove", (e) => {
-                        e.preventDefault();
-                        
-                        if (e.touches.length === 1 && isPanning && !longPressTriggered) {
-                            // Single finger panning (only if not showing tooltip)
-                            const deltaX = (e.touches[0].clientX - touchStartX) / currentZoom;
-                            const deltaY = (e.touches[0].clientY - touchStartY) / currentZoom;
-                            panX += deltaX;
-                            panY += deltaY;
-                            touchStartX = e.touches[0].clientX;
-                            touchStartY = e.touches[0].clientY;
-                            updateTransform();
-                            
-                            // Cancel long press if user moves finger
-                            clearTimeout(longPressTimer);
-                        } else if (e.touches.length === 1 && longPressTriggered) {
-                            // Hide tooltip and start panning when user moves after long press
-                            tooltip.style.display = "none";
-                            longPressTriggered = false;
-                            isPanning = true;
-                            touchStartX = e.touches[0].clientX;
-                            touchStartY = e.touches[0].clientY;
-                        } else if (e.touches.length === 2 && touches.length === 2) {
-                            // Two finger pinch zoom
-                            const currentDistance = getTouchDistance(Array.from(e.touches));
-                            if (initialDistance > 0) {
-                                const zoomFactor = currentDistance / initialDistance;
-                                const newZoom = Math.max(0.1, Math.min(10, initialTouchZoom * zoomFactor));
-                                const center = getTouchCenter(Array.from(e.touches));
-                                
-                                // Calculate the point in the current coordinate system
-                                const pointX = center.x / currentZoom - panX;
-                                const pointY = center.y / currentZoom - panY;
-                                
-                                // Calculate new pan to keep the center point stable
-                                panX = center.x / newZoom - pointX;
-                                panY = center.y / newZoom - pointY;
-                                
-                                currentZoom = newZoom;
-                                updateTransform();
+                                        // Position tooltip relative to container
+                                        tooltip.style.left =
+                                            containerX + 10 + "px";
+                                        tooltip.style.top =
+                                            containerY - 10 + "px";
+                                        tooltip.style.display = "block";
+                                    }
+                                }, 800); // 800ms long press
+                            } else if (e.touches.length === 2) {
+                                // Two fingers - start zooming
+                                e.preventDefault();
+                                isPanning = false;
+                                clearTimeout(longPressTimer);
+                                tooltip.style.display = "none";
+                                touches = Array.from(e.touches);
+                                initialDistance = getTouchDistance(touches);
+                                initialTouchZoom = currentZoom;
                             }
-                        }
-                    }, { passive: false });
+                        },
+                        { passive: false },
+                    );
+
+                    canvasContainer.addEventListener(
+                        "touchmove",
+                        (e) => {
+                            e.preventDefault();
+
+                            if (
+                                e.touches.length === 1 &&
+                                isPanning &&
+                                !longPressTriggered
+                            ) {
+                                // Single finger panning (only if not showing tooltip)
+                                const deltaX =
+                                    (e.touches[0].clientX - touchStartX) /
+                                    currentZoom;
+                                const deltaY =
+                                    (e.touches[0].clientY - touchStartY) /
+                                    currentZoom;
+                                panX += deltaX;
+                                panY += deltaY;
+                                touchStartX = e.touches[0].clientX;
+                                touchStartY = e.touches[0].clientY;
+                                updateTransform();
+
+                                // Cancel long press if user moves finger
+                                clearTimeout(longPressTimer);
+                            } else if (
+                                e.touches.length === 1 &&
+                                longPressTriggered
+                            ) {
+                                // Hide tooltip and start panning when user moves after long press
+                                tooltip.style.display = "none";
+                                longPressTriggered = false;
+                                isPanning = true;
+                                touchStartX = e.touches[0].clientX;
+                                touchStartY = e.touches[0].clientY;
+                            } else if (
+                                e.touches.length === 2 &&
+                                touches.length === 2
+                            ) {
+                                // Two finger pinch zoom
+                                const currentDistance = getTouchDistance(
+                                    Array.from(e.touches),
+                                );
+                                if (initialDistance > 0) {
+                                    const zoomFactor =
+                                        currentDistance / initialDistance;
+                                    const newZoom = Math.max(
+                                        0.1,
+                                        Math.min(
+                                            10,
+                                            initialTouchZoom * zoomFactor,
+                                        ),
+                                    );
+                                    const center = getTouchCenter(
+                                        Array.from(e.touches),
+                                    );
+
+                                    // Calculate the point in the current coordinate system
+                                    const pointX =
+                                        center.x / currentZoom - panX;
+                                    const pointY =
+                                        center.y / currentZoom - panY;
+
+                                    // Calculate new pan to keep the center point stable
+                                    panX = center.x / newZoom - pointX;
+                                    panY = center.y / newZoom - pointY;
+
+                                    currentZoom = newZoom;
+                                    updateTransform();
+                                }
+                            }
+                        },
+                        { passive: false },
+                    );
 
                     canvasContainer.addEventListener("touchend", (e) => {
                         if (e.touches.length === 0) {
@@ -1996,7 +2235,7 @@
                             touches = [];
                             initialDistance = 0;
                             clearTimeout(longPressTimer);
-                            
+
                             // Don't auto-hide tooltip on mobile - let user pan/zoom to dismiss
                         } else if (e.touches.length === 1) {
                             // Went from two fingers to one - restart panning
@@ -2028,10 +2267,11 @@
                             canvasContainer.getBoundingClientRect();
 
                         // Check if mouse/touch is within the container bounds first
-                        const isWithinContainer = e.clientX >= containerRect.left && 
-                                                e.clientX <= containerRect.right && 
-                                                e.clientY >= containerRect.top && 
-                                                e.clientY <= containerRect.bottom;
+                        const isWithinContainer =
+                            e.clientX >= containerRect.left &&
+                            e.clientX <= containerRect.right &&
+                            e.clientY >= containerRect.top &&
+                            e.clientY <= containerRect.bottom;
 
                         if (!isWithinContainer) {
                             tooltip.style.display = "none";
@@ -2114,6 +2354,36 @@
 
             getOptions();
             loadQueryFromURL();
+        </script>
+
+        <!-- Service Worker Registration -->
+        <script>
+            if ("serviceWorker" in navigator) {
+                window.addEventListener("load", () => {
+                    navigator.serviceWorker
+                        .register("/sw.js")
+                        .then((registration) => {
+                            // Handle updates
+                            registration.addEventListener("updatefound", () => {
+                                const newWorker = registration.installing;
+                                newWorker.addEventListener(
+                                    "statechange",
+                                    () => {
+                                        if (
+                                            newWorker.state === "installed" &&
+                                            navigator.serviceWorker.controller
+                                        ) {
+                                            // New service worker available
+                                        }
+                                    },
+                                );
+                            });
+                        })
+                        .catch((error) => {
+                            // Service Worker registration failed
+                        });
+                });
+            }
         </script>
     </body>
 </html>
