@@ -2071,16 +2071,8 @@
                                         return; // Touch is outside the container viewport
                                     }
 
-                                    // Second check: is touch within the actual canvas area?
-                                    const isWithinCanvas =
-                                        touchStartX >= canvasRect.left &&
-                                        touchStartX <= canvasRect.right &&
-                                        touchStartY >= canvasRect.top &&
-                                        touchStartY <= canvasRect.bottom;
-
-                                    if (!isWithinCanvas) {
-                                        return; // Touch is within container but not on canvas
-                                    }
+                                    // Note: Removed canvas bounds check as it doesn't work correctly with zoom transforms
+                                    // The container bounds check and grid bounds check below are sufficient
 
                                     // Calculate position relative to the container
                                     const containerX =
