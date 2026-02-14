@@ -251,6 +251,117 @@
                 cursor: pointer;
             }
 
+            /* Toggle Switch Styles */
+            .toggle-group {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 48px;
+                height: 26px;
+            }
+
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .toggle-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #3c4043;
+                transition: 0.3s;
+                border-radius: 26px;
+            }
+
+            .toggle-slider:before {
+                position: absolute;
+                content: "";
+                height: 20px;
+                width: 20px;
+                left: 3px;
+                bottom: 3px;
+                background-color: #e0e0e0;
+                transition: 0.3s;
+                border-radius: 50%;
+            }
+
+            .toggle-switch input:checked + .toggle-slider {
+                background-color: #4285f4;
+            }
+
+            .toggle-switch input:checked + .toggle-slider:before {
+                transform: translateX(22px);
+            }
+
+            .toggle-label {
+                color: #e0e0e0;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+            /* Info Icon Tooltip */
+            .info-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: rgba(66, 133, 244, 0.2);
+                color: #4285f4;
+                font-size: 12px;
+                font-style: italic;
+                font-weight: 700;
+                font-family: Georgia, serif;
+                cursor: help;
+                position: relative;
+            }
+
+            .info-icon:hover::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                bottom: calc(100% + 8px);
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.92);
+                color: #e0e0e0;
+                padding: 10px 14px;
+                border-radius: 8px;
+                font-size: 13px;
+                font-style: normal;
+                font-weight: 400;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                line-height: 1.5;
+                white-space: normal;
+                width: 260px;
+                text-align: left;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                pointer-events: none;
+            }
+
+            .info-icon:hover::before {
+                content: "";
+                position: absolute;
+                bottom: calc(100% + 2px);
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-top-color: rgba(0, 0, 0, 0.92);
+                z-index: 1000;
+                pointer-events: none;
+            }
+
             /* Results Table Styles */
             .results-container {
                 position: relative;
@@ -671,6 +782,20 @@
                         Preparing...
                     </div>
                 </div>
+                <div id="quran-loading-item" class="loading-item" style="display: none">
+                    <div class="loading-label">
+                        Loading Qur'an Embeddings...
+                    </div>
+                    <div class="progress-bar">
+                        <div
+                            id="quran-progress"
+                            class="progress-fill"
+                        ></div>
+                    </div>
+                    <div id="quran-status" class="loading-status">
+                        Preparing...
+                    </div>
+                </div>
             </div>
 
             <div class="search-container">
@@ -719,6 +844,14 @@
                         id="bottom-radio"
                     />
                     <label for="bottom-radio">Least Similar</label>
+                </div>
+                <div class="toggle-group">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="quran-toggle" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <label for="quran-toggle" class="toggle-label">Include Qur'an</label>
+                    <span class="info-icon" data-tooltip="We don't consider it to be possible to endorse both the Qur'an and the Bible since, amongst other things, they differ on the nature of God and therefore necessarily on the way of salvation. The option to search or display the Qur'an (though NB Muslims will only consider the original Arabic to be the Qur'an proper) is provided for both Christians and Muslims to be more familiar with both texts, their similarities and differences.">i</span>
                 </div>
             </div>
 
@@ -899,11 +1032,15 @@
                 ) {
                     // Check if core data is loaded (different requirements for different features)
                     const coreDataLoaded =
-                        bible && biblematrix && options.length > 0;
-                    const modelLoaded = window.sentenceTransformerModel;
+                        bible && biblematrix && (typeof options !== 'undefined') && options.length > 0;
+
+                    // If Quran is enabled, also wait for Quran data
+                    const quranToggle = document.getElementById('quran-toggle');
+                    const quranNeeded = quranToggle && quranToggle.checked;
+                    const quranReady = !quranNeeded || (quranText && quranMatrix);
 
                     // Hide if core data is ready (visualizations don't need the AI model)
-                    if (coreDataLoaded) {
+                    if (coreDataLoaded && quranReady) {
                         loadingContainer.classList.add("hidden");
                     }
                 }
@@ -953,9 +1090,61 @@
                 }
             };
 
+            // Quran embeddings progress callback (for initial load from URL)
+            const quranProgressCallback = (data) => {
+                const quranProgress = document.getElementById("quran-progress");
+                const quranStatus = document.getElementById("quran-status");
+                if (!quranProgress || !quranStatus) return;
+
+                if (data.status === "downloading") {
+                    if (data.percent !== null) {
+                        quranProgress.style.width = `${data.percent}%`;
+                        if (data.totalMB) {
+                            quranStatus.textContent = `Downloading Qur'an embeddings... ${data.percent}% (${data.loadedMB}/${data.totalMB} MB)`;
+                        } else {
+                            quranStatus.textContent = `Downloading Qur'an embeddings... ${data.loadedMB} MB`;
+                        }
+                    }
+                } else if (data.status === "complete") {
+                    quranProgress.style.width = "100%";
+                    quranStatus.textContent = "Qur'an embeddings loaded!";
+                    setTimeout(() => {
+                        if (window.checkAndHideLoading) {
+                            window.checkAndHideLoading();
+                        }
+                    }, 100);
+                } else if (data.status === "error") {
+                    quranProgress.style.backgroundColor = "#f44336";
+                    quranStatus.textContent = "Failed to load Qur'an embeddings";
+                }
+            };
+
+            // Check URL for Quran parameter early to start loading in parallel
+            const initialUrlParams = new URLSearchParams(window.location.search);
+            const quranFromUrl = initialUrlParams.has('k');
+
+            if (quranFromUrl) {
+                const qt = document.getElementById('quran-toggle');
+                if (qt) qt.checked = true;
+                const qli = document.getElementById('quran-loading-item');
+                if (qli) qli.style.display = '';
+            }
+
             loadAll(false, embeddingsProgressCallback);
+
+            // Start Quran loading in parallel if enabled from URL
+            if (quranFromUrl) {
+                loadQuranData(quranProgressCallback);
+            }
+
             let options = [];
             const trie = new Trie();
+
+            function rebuildSearchIndex() {
+                options = bible.map((pair) => pair[0]);
+                trie.root = new TrieNode();
+                options.forEach((option, index) => trie.insert(option, index));
+            }
 
             async function getOptions() {
                 // Wait for bible data to load
@@ -968,9 +1157,23 @@
                     await new Promise((resolve) => setTimeout(resolve, 100));
                 }
 
-                options = bible.map((pair) => pair[0]);
-                options.forEach((option, index) => trie.insert(option, index));
-                input.placeholder = "E.g. John 3:16, John *, or 'God so loved'";
+                // Save base Bible data for toggle support
+                bibleBaseText = bible;
+                bibleBaseMatrix = biblematrix;
+
+                // Wait for Quran data if enabled
+                const quranToggle = document.getElementById('quran-toggle');
+                if (quranToggle && quranToggle.checked) {
+                    while (quranText === false || quranMatrix === false) {
+                        await new Promise((resolve) => setTimeout(resolve, 100));
+                    }
+                    setCombinedData(true);
+                }
+
+                rebuildSearchIndex();
+                input.placeholder = quranToggle && quranToggle.checked
+                    ? "E.g. John 3:16, Surah 1:1, or 'God so loved'"
+                    : "E.g. John 3:16, John *, or 'God so loved'";
 
                 // Check if loading should be hidden
                 setTimeout(() => {
@@ -1016,6 +1219,27 @@
 
             // Show/hide suggestion pills
             function showSuggestionPills() {
+                // Add or remove Quran suggestion pill based on toggle state
+                const quranToggle = document.getElementById('quran-toggle');
+                let quranPill = document.getElementById('quran-suggestion-pill');
+                if (quranToggle && quranToggle.checked) {
+                    if (!quranPill) {
+                        quranPill = document.createElement('div');
+                        quranPill.className = 'suggestion-pill';
+                        quranPill.id = 'quran-suggestion-pill';
+                        quranPill.setAttribute('data-query', 'Numbers 7 * Surah 55 *');
+                        quranPill.textContent = 'Compare Numbers 7 and Surah 55';
+                        quranPill.addEventListener('click', () => {
+                            input.value = quranPill.getAttribute('data-query');
+                            updateUrlParams();
+                            handleInput(true);
+                            hideSuggestionPills();
+                        });
+                        suggestionPills.appendChild(quranPill);
+                    }
+                } else if (quranPill) {
+                    quranPill.remove();
+                }
                 suggestionPills.classList.remove("hidden");
             }
 
@@ -1090,6 +1314,60 @@
             bottomRadio.addEventListener("click", function () {
                 updateUrlParams();
                 handleInput();
+            });
+
+            // Quran toggle handler
+            document.getElementById('quran-toggle').addEventListener('change', async function () {
+                const includeQuran = this.checked;
+                updateUrlParams();
+
+                if (includeQuran && quranText === false) {
+                    // Need to load Quran data first - show inline progress
+                    results.innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <div style="color: #e0e0e0; margin-bottom: 15px; font-weight: 600;">Loading Qur'an Data...</div>
+                            <div class="progress-bar" style="max-width: 300px; margin: 0 auto 10px;">
+                                <div id="quran-inline-progress" class="progress-fill"></div>
+                            </div>
+                            <div id="quran-inline-status" class="loading-status">Preparing...</div>
+                        </div>
+                    `;
+
+                    const inlineProgressCallback = (data) => {
+                        const prog = document.getElementById('quran-inline-progress');
+                        const stat = document.getElementById('quran-inline-status');
+                        if (!prog || !stat) return;
+
+                        if (data.status === 'downloading') {
+                            if (data.percent !== null) {
+                                prog.style.width = data.percent + '%';
+                                stat.textContent = data.totalMB
+                                    ? `Downloading... ${data.percent}% (${data.loadedMB}/${data.totalMB} MB)`
+                                    : `Downloading... ${data.loadedMB} MB`;
+                            }
+                        } else if (data.status === 'complete') {
+                            prog.style.width = '100%';
+                            stat.textContent = "Qur'an embeddings loaded!";
+                        }
+                    };
+
+                    loadQuranData(inlineProgressCallback);
+
+                    while (quranText === false || quranMatrix === false) {
+                        await new Promise((resolve) => setTimeout(resolve, 100));
+                    }
+                }
+
+                setCombinedData(includeQuran);
+                rebuildSearchIndex();
+
+                // Re-trigger search if there's a query
+                if (input.value.trim().length > 0) {
+                    lastProcessedQuery = ''; // Reset to force re-computation
+                    await choose();
+                } else {
+                    clearResults();
+                }
             });
 
             input.addEventListener("keyup", function (event) {
@@ -1185,6 +1463,13 @@
                     }
 
                     // Add credits when no query is active
+                    const quranToggleCredits = document.getElementById('quran-toggle');
+                    const quranCreditHtml = quranToggleCredits && quranToggleCredits.checked
+                        ? `<p style="color:#9aa0a6; text-align: center; margin-bottom: 30px; font-size: 14px; line-height: 1.6;">
+                                Qur'an text: Yusuf Ali English translation, adapted from
+                                <a href="https://github.com/islamAndAi/QURAN-NLP" style="color: #4285f4;">github.com/islamAndAi/QURAN-NLP</a>.
+                            </p>`
+                        : '';
                     results.innerHTML = `
                         <div style="margin-top: 60px; padding: 40px 20px;">
                             <p style="color:#9aa0a6; text-align: center; margin-bottom: 30px; font-size: 14px; line-height: 1.6;">
@@ -1195,6 +1480,7 @@
                                 and the Berean Bible Translation Committee. This text of God's Word has been
                                 <a href="https://creativecommons.org/publicdomain/zero/1.0/" style="color: #4285f4;">dedicated to the public domain</a>.
                             </p>
+                            ${quranCreditHtml}
                             <p style="color:#9aa0a6; text-align: center; margin-bottom: 30px; font-size: 14px; line-height: 1.6;">
                                 AI semantic search powered by
                                 <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2" style="color: #4285f4;">all-MiniLM-L6-v2</a>
@@ -1368,19 +1654,29 @@
             function updateUrlParams() {
                 const inputText = input.value.trim();
                 const isBottomSelected = bottomRadio.checked;
+                const includeQuran = document.getElementById('quran-toggle').checked;
+
+                const url = new URL(window.location);
 
                 if (inputText) {
-                    const url = new URL(window.location);
                     url.searchParams.set("q", inputText);
-
-                    if (isBottomSelected) {
-                        url.searchParams.set("r", "");
-                    } else {
-                        url.searchParams.delete("r");
-                    }
-
-                    window.history.replaceState({}, "", url);
+                } else {
+                    url.searchParams.delete("q");
                 }
+
+                if (isBottomSelected) {
+                    url.searchParams.set("r", "");
+                } else {
+                    url.searchParams.delete("r");
+                }
+
+                if (includeQuran) {
+                    url.searchParams.set("k", "");
+                } else {
+                    url.searchParams.delete("k");
+                }
+
+                window.history.replaceState({}, "", url);
             }
 
             async function choose() {
@@ -1441,6 +1737,13 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const query = urlParams.get("q");
                 const reverse = urlParams.has("r");
+                const includeQuran = urlParams.has("k");
+
+                // Set Quran toggle state from URL
+                const quranToggle = document.getElementById('quran-toggle');
+                if (quranToggle) {
+                    quranToggle.checked = includeQuran;
+                }
 
                 if (query) {
                     input.value = query;

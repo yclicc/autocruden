@@ -9,6 +9,13 @@ var bible = false;           // Biblical text data (BSB - Berean Study Bible)
 var biblematrix = false;     // 384-dimensional embeddings matrix
 var wasmModule = null;       // WebAssembly module for performance optimization
 
+// Quran data variables
+var quranText = false;           // Quran text data (Yusuf Ali translation)
+var quranMatrix = false;         // Quran embeddings matrix
+var quranLoadingStarted = false; // Guard against multiple load calls
+var bibleBaseText = null;        // Bible-only text (stored for toggle support)
+var bibleBaseMatrix = null;      // Bible-only embeddings (stored for toggle support)
+
 // ============================================================================
 // COLOR SCHEMES FOR VISUALIZATIONS
 // ============================================================================
@@ -125,8 +132,8 @@ async function loadTableData(url, separator, parseNumbers) {
     const response = await fetch(url);
     const csvData = await response.text();
 
-    // Parse CSV data into rows and columns
-    const rows = csvData.split(/\r?\n/);
+    // Parse CSV data into rows and columns (filter trailing empty line)
+    const rows = csvData.split(/\r?\n/).filter((row) => row.length > 0);
     const table = rows.map((row) =>
       row.split(separator).map(parseNumbers ? parseFloat : (val) => val),
     );
@@ -288,6 +295,47 @@ async function initializeAllData(spoofMatrix = false, progressCallback = null) {
     loadBinaryEmbeddings("./bsbembedfast16.binary", 384, progressCallback).then((matrix) => {
       biblematrix = matrix;
     });
+  }
+}
+
+// ============================================================================
+// QURAN DATA LOADING AND COMBINING
+// ============================================================================
+
+/**
+ * Loads Quran text and embeddings data
+ * @param {Function} progressCallback - Progress update callback for embeddings
+ */
+function loadQuranData(progressCallback = null) {
+  if (quranLoadingStarted) return;
+  quranLoadingStarted = true;
+
+  loadTableData("qya.csv", "|", false).then((table) => {
+    quranText = table.slice(1); // Remove header row
+  });
+
+  loadBinaryEmbeddings("./qyaembedfast16.binary", 384, progressCallback).then((matrix) => {
+    quranMatrix = matrix;
+  });
+}
+
+/**
+ * Combines or separates Bible and Quran data into the active bible/biblematrix arrays
+ * @param {boolean} includeQuran - Whether to include Quran data
+ */
+function setCombinedData(includeQuran) {
+  // Save Bible-only data on first call
+  if (bibleBaseText === null && bible) {
+    bibleBaseText = bible;
+    bibleBaseMatrix = biblematrix;
+  }
+
+  if (includeQuran && quranText && quranMatrix) {
+    bible = bibleBaseText.concat(quranText);
+    biblematrix = bibleBaseMatrix.concat(quranMatrix);
+  } else {
+    bible = bibleBaseText || bible;
+    biblematrix = bibleBaseMatrix || biblematrix;
   }
 }
 

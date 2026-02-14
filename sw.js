@@ -19,7 +19,9 @@ const STATIC_ASSETS = [
 
 // Optional files to cache on demand
 const OPTIONAL_FILES = [
-  '/dot_products.wasm'
+  '/dot_products.wasm',
+  '/qya.csv',
+  '/qyaembedfast16.binary'
 ];
 
 // Install event - cache essential files
