@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <!-- Privacy-friendly analytics by Plausible -->
+    <script async src="https://plausible.io/js/pa-mOnU7Zo_lyCHuMZoxbVbC.js"></script>
+    <script>
+      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+      plausible.init()
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pancakes and Dates Reading Plan</title>
+    <meta name="description" content="A 30-day Ramadan reading plan pairing Quran surahs with Psalms, morning and evening" />
+    <meta name="theme-color" content="#4285f4" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+
+        /* Header */
+        .page-header {
+            text-align: center;
+            padding: 50px 0 20px;
+        }
+
+        .page-header h1 {
+            font-size: 2.2em;
+            font-weight: 300;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #intro {
+            max-width: 650px;
+            margin: 0 auto 20px;
+            color: #9aa0a6;
+            font-size: 1em;
+            line-height: 1.7;
+        }
+
+        #note1, #note2 {
+            max-width: 650px;
+            margin: 0 auto 16px;
+            color: #9aa0a6;
+            font-size: 0.9em;
+            line-height: 1.7;
+        }
+
+        .credits {
+            max-width: 650px;
+            margin: 20px auto 10px;
+            color: #7a7e83;
+            font-size: 0.8em;
+            line-height: 1.7;
+        }
+
+        .credits p {
+            margin-bottom: 4px;
+        }
+
+        .credits a {
+            color: #4285f4;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin: 10px 0 30px;
+            color: #4285f4;
+            text-decoration: none;
+            font-size: 0.95em;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Loading */
+        #loading {
+            text-align: center;
+            padding: 60px 0;
+            color: #9aa0a6;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #3c4043;
+            border-top-color: #4285f4;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Plan Table */
+        .plan-table-wrap {
+            overflow-x: auto;
+            margin-bottom: 50px;
+        }
+
+        .plan-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .plan-table th {
+            background: rgba(66, 133, 244, 0.15);
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85em;
+            color: #8ab4f8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .plan-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.92em;
+        }
+
+        .plan-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .plan-table tbody tr {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .plan-table tbody tr:hover {
+            background: rgba(66, 133, 244, 0.1);
+        }
+
+        .plan-table a {
+            color: inherit;
+            text-decoration: none;
+            display: block;
+        }
+
+        .day-num {
+            font-weight: 600;
+            color: #8ab4f8;
+        }
+
+        td.total-col {
+            text-align: center;
+            color: #9aa0a6;
+        }
+
+        td.quran-col {
+            color: #e8d5a0;
+        }
+
+        td.psalm-col {
+            color: #e0e0e0;
+        }
+
+        /* Totals row */
+        .plan-table tfoot td {
+            padding: 12px 14px;
+            font-weight: 600;
+            background: rgba(66, 133, 244, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: none;
+        }
+
+        /* Day Sections */
+        .day-section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .day-section h2 {
+            font-size: 1.4em;
+            font-weight: 400;
+            margin-bottom: 6px;
+            color: #8ab4f8;
+        }
+
+        .day-section .day-subtitle {
+            color: #9aa0a6;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .day-section h3 {
+            font-size: 1.1em;
+            font-weight: 500;
+            margin: 24px 0 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .time-heading {
+            font-size: 1.2em;
+            font-weight: 400;
+            margin: 30px 0 8px;
+            color: #c0c0c0;
+        }
+
+        .time-heading:first-of-type {
+            margin-top: 0;
+        }
+
+        .quran-heading {
+            color: #f4b400;
+        }
+
+        .bible-heading {
+            color: #8ab4f8;
+        }
+
+        .verse {
+            margin-bottom: 8px;
+            font-size: 0.95em;
+            line-height: 1.7;
+        }
+
+        .verse .ref {
+            font-weight: 600;
+            margin-right: 6px;
+        }
+
+        .verse.quran-verse .ref {
+            color: #f4b400;
+        }
+
+        .verse.quran-verse .text {
+            color: #e8d5a0;
+        }
+
+        .verse.bible-verse .ref {
+            color: #8ab4f8;
+        }
+
+        .verse.bible-verse .text {
+            color: #e0e0e0;
+        }
+
+        .external-links {
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .external-links a {
+            color: #4285f4;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .external-links a:hover {
+            text-decoration: underline;
+        }
+
+        .permalink {
+            color: #555;
+            text-decoration: none;
+            margin-left: 8px;
+            font-weight: 300;
+        }
+
+        .permalink:hover {
+            color: #8ab4f8;
+        }
+
+        .back-to-plan {
+            color: #9aa0a6;
+            text-decoration: none;
+            font-size: 0.85em;
+        }
+
+        .back-to-plan:hover {
+            color: #e0e0e0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 30px 0 15px;
+            }
+
+            .page-header h1 {
+                font-size: 1.5em;
+            }
+
+            .day-section {
+                padding: 18px;
+                margin-bottom: 30px;
+            }
+
+            .plan-table th,
+            .plan-table td {
+                padding: 8px 10px;
+                font-size: 0.82em;
+            }
+
+            .external-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>Pancakes and Dates Reading Plan</h1>
+            <div id="intro">Inspired by the fact that in 2026 both Ramadan and Lent begin on the same day (or nearly), this page presents a 30 day reading plan for the entire Qur'an (in the Yusuf Ali English translation) as well as the traditional 30 day reading plan for the Psalms (known to Muslims as Zabur and to Jews as Tehillim) from the English Book of Common Prayer. Restricting to the Psalms is a practical decision taken because the Bible entire would be very hard to read in 30 days, and the Psalms are perhaps the most beautiful and poetic section of the Bible. As there doesn't seem to be a standardised reading plan for the Qur'an, this one has been created using dynamic programming to give the optimal even division across 60 sessions whereby no Surah is split up and they are all read in the normal order.</div>
+            <div id="note1">The translation of the Bible on this page is the Berean Standard Bible, a recent public domain translation. Since this is not widely used a link to the much more popular New International Version (NIV) is also supplied, as well as links to the similar Arabic NAV (New Arabic Version). Similarly, links are provided to Quran.com for those who prefer a different English translation or to read the original Arabic text. Note that the verse numbers of Yusuf Ali are not necessarily consistent with the Kufic numbering system that can be found on <a href="https://en.wikipedia.org/wiki/List_of_chapters_in_the_Quran">Wikipedia</a>, but that the more conventional verse numbers were used in the computation of the optimal reading plan.</div>
+            <div id="note2">We don't consider it to be possible to endorse both the Qur'an and the Bible since, amongst other things, they differ on the nature of God and therefore necessarily on the way of salvation. The reading plan here is provided for both Christians and Muslims to be more familiar with both texts, their similarities and differences.</div>
+            <div class="credits">
+                <p>Qur'an text: Yusuf Ali English translation, adapted from
+                <a href="https://github.com/islamAndAi/QURAN-NLP">github.com/islamAndAi/QURAN-NLP</a>.</p>
+                
+                <p>Psalms text: The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with
+                <a href="https://biblehub.com">Bible Hub</a>,
+                <a href="https://discoverybible.com">Discovery Bible</a>,
+                <a href="https://openbible.com">OpenBible.com</a>,
+                and the Berean Bible Translation Committee. This text of God's Word has been
+                <a href="https://creativecommons.org/publicdomain/zero/1.0/">dedicated to the public domain</a>.</p>
+            </div>
+            <div style="margin-top: 14px;">
+                <a href="?ramadan_starts=18" class="back-link" style="margin-right: 18px;">Smart Link First day of Ramadan: 18th Feb</a>
+                <a href="?ramadan_starts=19" class="back-link">Smart Link: First day of Ramadan 19th Feb</a>
+            </div>
+            <a href="/" class="back-link">&larr; Back to AutoCruden</a>
+        </div>
+
+        <div id="loading">
+            <div class="spinner"></div>
+            <div>Loading verse texts&hellip;</div>
+        </div>
+
+        <div id="content" style="display:none;">
+            <div class="plan-table-wrap" id="plan-table-wrap"></div>
+            <div id="day-sections"></div>
+        </div>
+    </div>
+
+    <script>
+    // Quran morning/evening plan from DP-optimised reading_plan.py --quran --morning-evening
+    const QURAN_PLAN = [
+        { day:1,  morning:{label:"Surah 1\u20132",     surahNums:[1,2]},           evening:{label:"Surah 3",          surahNums:[3]} },
+        { day:2,  morning:{label:"Surah 4",            surahNums:[4]},             evening:{label:"Surah 5",          surahNums:[5]} },
+        { day:3,  morning:{label:"Surah 6",            surahNums:[6]},             evening:{label:"Surah 7",          surahNums:[7]} },
+        { day:4,  morning:{label:"Surah 8",            surahNums:[8]},             evening:{label:"Surah 9",          surahNums:[9]} },
+        { day:5,  morning:{label:"Surah 10",           surahNums:[10]},            evening:{label:"Surah 11",         surahNums:[11]} },
+        { day:6,  morning:{label:"Surah 12",           surahNums:[12]},            evening:{label:"Surah 13\u201314", surahNums:[13,14]} },
+        { day:7,  morning:{label:"Surah 15",           surahNums:[15]},            evening:{label:"Surah 16",         surahNums:[16]} },
+        { day:8,  morning:{label:"Surah 17",           surahNums:[17]},            evening:{label:"Surah 18",         surahNums:[18]} },
+        { day:9,  morning:{label:"Surah 19",           surahNums:[19]},            evening:{label:"Surah 20",         surahNums:[20]} },
+        { day:10, morning:{label:"Surah 21",           surahNums:[21]},            evening:{label:"Surah 22",         surahNums:[22]} },
+        { day:11, morning:{label:"Surah 23",           surahNums:[23]},            evening:{label:"Surah 24",         surahNums:[24]} },
+        { day:12, morning:{label:"Surah 25",           surahNums:[25]},            evening:{label:"Surah 26",         surahNums:[26]} },
+        { day:13, morning:{label:"Surah 27",           surahNums:[27]},            evening:{label:"Surah 28",         surahNums:[28]} },
+        { day:14, morning:{label:"Surah 29",           surahNums:[29]},            evening:{label:"Surah 30",         surahNums:[30]} },
+        { day:15, morning:{label:"Surah 31\u201332",   surahNums:[31,32]},         evening:{label:"Surah 33",         surahNums:[33]} },
+        { day:16, morning:{label:"Surah 34\u201335",   surahNums:[34,35]},         evening:{label:"Surah 36",         surahNums:[36]} },
+        { day:17, morning:{label:"Surah 37",           surahNums:[37]},            evening:{label:"Surah 38",         surahNums:[38]} },
+        { day:18, morning:{label:"Surah 39",           surahNums:[39]},            evening:{label:"Surah 40",         surahNums:[40]} },
+        { day:19, morning:{label:"Surah 41\u201342",   surahNums:[41,42]},         evening:{label:"Surah 43",         surahNums:[43]} },
+        { day:20, morning:{label:"Surah 44\u201345",   surahNums:[44,45]},         evening:{label:"Surah 46\u201347", surahNums:[46,47]} },
+        { day:21, morning:{label:"Surah 48\u201350",   surahNums:[48,49,50]},      evening:{label:"Surah 51\u201352", surahNums:[51,52]} },
+        { day:22, morning:{label:"Surah 53",           surahNums:[53]},            evening:{label:"Surah 54",         surahNums:[54]} },
+        { day:23, morning:{label:"Surah 55",           surahNums:[55]},            evening:{label:"Surah 56",         surahNums:[56]} },
+        { day:24, morning:{label:"Surah 57\u201360",   surahNums:[57,58,59,60]},   evening:{label:"Surah 61\u201366", surahNums:[61,62,63,64,65,66]} },
+        { day:25, morning:{label:"Surah 67\u201368",   surahNums:[67,68]},         evening:{label:"Surah 69\u201370", surahNums:[69,70]} },
+        { day:26, morning:{label:"Surah 71\u201373",   surahNums:[71,72,73]},      evening:{label:"Surah 74\u201375", surahNums:[74,75]} },
+        { day:27, morning:{label:"Surah 76\u201377",   surahNums:[76,77]},         evening:{label:"Surah 78\u201379", surahNums:[78,79]} },
+        { day:28, morning:{label:"Surah 80\u201381",   surahNums:[80,81]},         evening:{label:"Surah 82\u201384", surahNums:[82,83,84]} },
+        { day:29, morning:{label:"Surah 85\u201388",   surahNums:[85,86,87,88]},   evening:{label:"Surah 89\u201392", surahNums:[89,90,91,92]} },
+        { day:30, morning:{label:"Surah 93\u2013100",  surahNums:[93,94,95,96,97,98,99,100]}, evening:{label:"Surah 101\u2013114", surahNums:[101,102,103,104,105,106,107,108,109,110,111,112,113,114]} },
+    ];
+
+    // Psalms plan from Book of Common Prayer 30-day cycle (bcp_psalms.csv)
+    const PSALMS_PLAN = [
+        { day:1,  morning:"1-5",        evening:"6-8" },
+        { day:2,  morning:"9-11",       evening:"12-14" },
+        { day:3,  morning:"15-17",      evening:"18" },
+        { day:4,  morning:"19-21",      evening:"22-23" },
+        { day:5,  morning:"24-26",      evening:"27-29" },
+        { day:6,  morning:"30-31",      evening:"32-34" },
+        { day:7,  morning:"35-36",      evening:"37" },
+        { day:8,  morning:"38-40",      evening:"41-43" },
+        { day:9,  morning:"44-46",      evening:"47-49" },
+        { day:10, morning:"50-52",      evening:"53-55" },
+        { day:11, morning:"56-58",      evening:"59-61" },
+        { day:12, morning:"62-64",      evening:"65-67" },
+        { day:13, morning:"68",         evening:"69-70" },
+        { day:14, morning:"71-72",      evening:"73-74" },
+        { day:15, morning:"75-77",      evening:"78" },
+        { day:16, morning:"79-81",      evening:"82-85" },
+        { day:17, morning:"86-88",      evening:"89" },
+        { day:18, morning:"90-92",      evening:"93-94" },
+        { day:19, morning:"95-97",      evening:"98-101" },
+        { day:20, morning:"102-103",    evening:"104" },
+        { day:21, morning:"105",        evening:"106" },
+        { day:22, morning:"107",        evening:"108-109" },
+        { day:23, morning:"110-113",    evening:"114-115" },
+        { day:24, morning:"116-118",    evening:"119:1-32" },
+        { day:25, morning:"119:33-72",  evening:"119:73-104" },
+        { day:26, morning:"119:105-144",evening:"119:145-176" },
+        { day:27, morning:"120-125",    evening:"126-131" },
+        { day:28, morning:"132-135",    evening:"136-138" },
+        { day:29, morning:"139-140",    evening:"141-143" },
+        { day:30, morning:"144-146",    evening:"147-150" },
+    ];
+
+    async function loadCSV(url) {
+        const resp = await fetch(url);
+        const text = await resp.text();
+        const lines = text.trim().split('\n');
+        const verses = [];
+        for (let i = 1; i < lines.length; i++) {
+            const sep = lines[i].indexOf('|');
+            if (sep === -1) continue;
+            verses.push({ ref: lines[i].substring(0, sep), text: lines[i].substring(sep + 1) });
+        }
+        return verses;
+    }
+
+    function versesForSurahs(quranData, surahNums) {
+        const set = new Set(surahNums);
+        return quranData.filter(v => {
+            const m = v.ref.match(/^Surah (\d+):/);
+            return m && set.has(parseInt(m[1]));
+        });
+    }
+
+    // Parse a BCP psalm spec and return matching verses from bsb.csv
+    function versesForPsalmSpec(bibleData, spec) {
+        spec = spec.trim();
+        if (spec.startsWith('119:')) {
+            const parts = spec.split(':')[1].split('-');
+            const startV = parseInt(parts[0]);
+            const endV = parseInt(parts[1]);
+            return bibleData.filter(v => {
+                const m = v.ref.match(/^Psalm 119:(\d+)$/);
+                if (!m) return false;
+                const vn = parseInt(m[1]);
+                return vn >= startV && vn <= endV;
+            });
+        } else if (spec.includes('-')) {
+            const parts = spec.split('-');
+            const startP = parseInt(parts[0]);
+            const endP = parseInt(parts[1]);
+            return bibleData.filter(v => {
+                const m = v.ref.match(/^Psalm (\d+):/);
+                if (!m) return false;
+                const pn = parseInt(m[1]);
+                return pn >= startP && pn <= endP;
+            });
+        } else {
+            const pn = parseInt(spec);
+            return bibleData.filter(v => {
+                const m = v.ref.match(/^Psalm (\d+):/);
+                return m && parseInt(m[1]) === pn;
+            });
+        }
+    }
+
+    function psalmSpecLabel(spec) {
+        spec = spec.trim();
+        if (spec.startsWith('119:')) {
+            return 'Psalm ' + spec;
+        } else if (spec.includes('-')) {
+            const parts = spec.split('-');
+            return parts[0] === parts[1] ? 'Psalm ' + parts[0] : 'Psalms ' + parts[0] + '\u2013' + parts[1];
+        } else {
+            return 'Psalm ' + spec;
+        }
+    }
+
+    // Expand a psalm spec into individual psalm numbers (for per-chapter links)
+    function psalmSpecNums(spec) {
+        spec = spec.trim();
+        if (spec.startsWith('119:')) {
+            return []; // handled separately as verse range
+        } else if (spec.includes('-')) {
+            const parts = spec.split('-');
+            const a = parseInt(parts[0]), b = parseInt(parts[1]);
+            const nums = [];
+            for (let i = a; i <= b; i++) nums.push(i);
+            return nums;
+        } else {
+            return [parseInt(spec)];
+        }
+    }
+
+    function buildTable(quranData, bibleData) {
+        let html = '<table class="plan-table"><thead><tr>' +
+            '<th>Day</th><th>Morning Qur\u2019an</th><th>Morning Psalms</th><th>Evening Qur\u2019an</th><th>Evening Psalms</th><th>Total</th>' +
+            '</tr></thead><tbody>';
+
+        let grandTotal = 0;
+
+        for (let i = 0; i < 30; i++) {
+            const q = QURAN_PLAN[i];
+            const p = PSALMS_PLAN[i];
+            const mqv = versesForSurahs(quranData, q.morning.surahNums).length;
+            const mpv = versesForPsalmSpec(bibleData, p.morning).length;
+            const eqv = versesForSurahs(quranData, q.evening.surahNums).length;
+            const epv = versesForPsalmSpec(bibleData, p.evening).length;
+            const total = mqv + mpv + eqv + epv;
+            grandTotal += total;
+
+            html += `<tr onclick="document.getElementById('day-${q.day}-morning').scrollIntoView({behavior:'smooth'})">` +
+                `<td class="day-num">${q.day}</td>` +
+                `<td class="quran-col">${q.morning.label} (${mqv})</td>` +
+                `<td class="psalm-col">${psalmSpecLabel(p.morning)} (${mpv})</td>` +
+                `<td class="quran-col">${q.evening.label} (${eqv})</td>` +
+                `<td class="psalm-col">${psalmSpecLabel(p.evening)} (${epv})</td>` +
+                `<td class="total-col">${total}</td>` +
+                `</tr>`;
+        }
+
+        html += '</tbody><tfoot><tr>' +
+            `<td></td><td colspan="4">Complete Qur'an + Psalms 1\u2013150</td><td class="total-col">${grandTotal}</td>` +
+            '</tr></tfoot></table>';
+        return html;
+    }
+
+    function chapterOf(ref) {
+        const colon = ref.lastIndexOf(':');
+        return colon === -1 ? ref : ref.substring(0, colon);
+    }
+
+    function renderVerses(verses, cssClass) {
+        let html = '';
+        let lastChapter = null;
+        for (const v of verses) {
+            const ch = chapterOf(v.ref);
+            if (lastChapter !== null && ch !== lastChapter) {
+                html += '<div style="height:16px;"></div>';
+            }
+            lastChapter = ch;
+            html += `<div class="verse ${cssClass}"><span class="ref">${v.ref}</span> <span class="text">${v.text}</span></div>`;
+        }
+        return html;
+    }
+
+    function surahLinks(surahNums) {
+        return surahNums.map(n =>
+            `<a href="https://quran.com/${n}" target="_blank" rel="noopener">Surah ${n} on Quran.com</a>`
+        ).join(' ');
+    }
+
+    function psalmBibleGatewaySearch(spec) {
+        spec = spec.trim();
+        if (spec.startsWith('119:')) {
+            return 'Psalm ' + spec;
+        } else if (spec.includes('-')) {
+            const parts = spec.split('-');
+            return 'Psalm ' + parts[0] + '-' + parts[1];
+        } else {
+            return 'Psalm ' + spec;
+        }
+    }
+
+    function psalmLinks(spec) {
+        const search = psalmBibleGatewaySearch(spec);
+        const label = psalmSpecLabel(spec);
+        return `<a href="https://www.biblegateway.com/passage/?search=${encodeURIComponent(search)}&version=NIV" target="_blank" rel="noopener">${label} (NIV English)</a>` +
+            ` <a href="https://www.biblegateway.com/passage/?search=${encodeURIComponent(search)}&version=NAV" target="_blank" rel="noopener">${label} (NAV Arabic)</a>`;
+    }
+
+    const basePath = window.location.pathname;
+
+    function buildDaySections(quranData, bibleData) {
+        let html = '';
+        for (let i = 0; i < 30; i++) {
+            const q = QURAN_PLAN[i];
+            const p = PSALMS_PLAN[i];
+
+            const mqVerses = versesForSurahs(quranData, q.morning.surahNums);
+            const mpVerses = versesForPsalmSpec(bibleData, p.morning);
+            const eqVerses = versesForSurahs(quranData, q.evening.surahNums);
+            const epVerses = versesForPsalmSpec(bibleData, p.evening);
+
+            const morningPsalmLabel = psalmSpecLabel(p.morning);
+            const eveningPsalmLabel = psalmSpecLabel(p.evening);
+
+            // Morning section
+            html += `<div class="day-section" id="day-${q.day}-morning">`;
+            html += `<h2>Day ${q.day} &mdash; Morning <a href="${basePath}#day-${q.day}-morning" class="permalink">#</a></h2>`;
+            html += `<div class="day-subtitle">${q.morning.label} + ${morningPsalmLabel}</div>`;
+
+            html += '<div class="external-links">';
+            html += surahLinks(q.morning.surahNums);
+            html += ' ' + psalmLinks(p.morning);
+            html += ` <a href="#plan-table-wrap" class="back-to-plan">&uarr; Back to plan</a>`;
+            html += '</div>';
+
+            html += `<h3 class="quran-heading">Qur'an &mdash; ${q.morning.label}</h3>`;
+            html += renderVerses(mqVerses, 'quran-verse');
+            html += `<h3 class="bible-heading">${morningPsalmLabel}</h3>`;
+            html += renderVerses(mpVerses, 'bible-verse');
+            html += '</div>';
+
+            // Evening section
+            html += `<div class="day-section" id="day-${q.day}-evening">`;
+            html += `<h2>Day ${q.day} &mdash; Evening <a href="${basePath}#day-${q.day}-evening" class="permalink">#</a></h2>`;
+            html += `<div class="day-subtitle">${q.evening.label} + ${eveningPsalmLabel}</div>`;
+
+            html += '<div class="external-links">';
+            html += surahLinks(q.evening.surahNums);
+            html += ' ' + psalmLinks(p.evening);
+            html += ` <a href="#plan-table-wrap" class="back-to-plan">&uarr; Back to plan</a>`;
+            html += '</div>';
+
+            html += `<h3 class="quran-heading">Qur'an &mdash; ${q.evening.label}</h3>`;
+            html += renderVerses(eqVerses, 'quran-verse');
+            html += `<h3 class="bible-heading">${eveningPsalmLabel}</h3>`;
+            html += renderVerses(epVerses, 'bible-verse');
+            html += '</div>';
+        }
+        return html;
+    }
+
+    function scrollToTarget() {
+        const params = new URLSearchParams(window.location.search);
+        const startDay = params.get('ramadan_starts');
+
+        if (startDay) {
+            const startDate = parseInt(startDay);
+            if (startDate !== 18 && startDate !== 19) return;
+
+            // Ramadan 2026 starts evening of Feb 17 or Feb 18 depending on moon sighting.
+            // The first full day of fasting is Feb 18 or Feb 19.
+            const ramadanStart = new Date(2026, 1, startDate); // month is 0-indexed
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const diffDays = Math.floor((today - ramadanStart) / (1000 * 60 * 60 * 24));
+            const ramadanDay = diffDays + 1; // Day 1 on the start date
+
+            if (ramadanDay < 1 || ramadanDay > 30) return;
+
+            const isAfternoon = now.getHours() >= 12;
+            const targetId = `day-${ramadanDay}-${isAfternoon ? 'evening' : 'morning'}`;
+            const el = document.getElementById(targetId);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        } else if (window.location.hash) {
+            const el = document.getElementById(window.location.hash.substring(1));
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    async function init() {
+        try {
+            const [quranData, bibleData] = await Promise.all([
+                loadCSV('../qya.csv'),
+                loadCSV('../bsb.csv')
+            ]);
+
+            document.getElementById('plan-table-wrap').innerHTML = buildTable(quranData, bibleData);
+            document.getElementById('day-sections').innerHTML = buildDaySections(quranData, bibleData);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            scrollToTarget();
+        } catch (e) {
+            document.getElementById('loading').innerHTML =
+                '<div style="color:#ea4335;">Failed to load verse data. Make sure bsb.csv and qya.csv are available.</div>';
+            console.error(e);
+        }
+    }
+
+    init();
+    </script>
+</body>
+</html>
